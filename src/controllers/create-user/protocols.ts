@@ -1,0 +1,16 @@
+import { User } from '../../models/user';
+
+// export interface IGetUsersController {
+//   handle(): Promise<HttpResponse<User[]>>;
+// }
+
+export interface CreateUserParams {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+export interface ICreateUsersRepository {
+  createUser(params: CreateUserParams): Promise<User>;
+}
