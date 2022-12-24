@@ -1,12 +1,16 @@
 import { config } from 'dotenv';
 import express from 'express';
+import { CreateUserController } from './controllers/create-user';
 import { GetUsersController } from './controllers/get-users';
 import { mongoClient } from './database/config';
+import { CreateUserRepository } from './repositories/create-user';
 import { GetUsersRepository } from './repositories/get-users';
 
 const main = async () => {
   config();
   const app = express();
+
+  app.use(express.json());
 
   const port = process.env.PORT || 3003;
   await mongoClient.connect();
@@ -15,6 +19,13 @@ const main = async () => {
     const getUsersRepository = new GetUsersRepository();
     const getUsersControllers = new GetUsersController(getUsersRepository);
     const { body, statusCode } = await getUsersControllers.handle();
+    res.send(body).status(statusCode);
+  });
+
+  app.post('/users', async (req, res) => {
+    const createUserRepository = new CreateUserRepository();
+    const createUserControllers = new CreateUserController(createUserRepository);
+    const { body, statusCode } = await createUserControllers.handle({ body: req.body });
     res.send(body).status(statusCode);
   });
 
