@@ -19,14 +19,15 @@ const main = async () => {
     const getUsersRepository = new GetUsersRepository();
     const getUsersControllers = new GetUsersController(getUsersRepository);
     const { body, statusCode } = await getUsersControllers.handle();
-    res.send(body).status(statusCode);
+    res.status(statusCode).send(body);
   });
 
   app.post('/users', async (req, res) => {
     const createUserRepository = new CreateUserRepository();
     const createUserControllers = new CreateUserController(createUserRepository);
     const { body, statusCode } = await createUserControllers.handle({ body: req.body });
-    res.send(body).status(statusCode);
+    console.log(statusCode);
+    res.status(statusCode).send(body);
   });
 
   app.listen(port, () => console.log(`listening on port: ${port}!`));
