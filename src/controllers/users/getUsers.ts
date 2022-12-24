@@ -1,4 +1,4 @@
-import { IGetUsersController, IGetUsersRepository } from './protocols';
+import { IGetUsersController, IGetUsersRepository } from './types';
 
 export class GetUsersController implements IGetUsersController {
   constructor(private readonly getUsersRepository: IGetUsersRepository) {}
@@ -13,7 +13,7 @@ export class GetUsersController implements IGetUsersController {
     } catch (error) {
       return {
         statusCode: 500,
-        body: 'Something went worng',
+        body: 'Something went wrong',
       };
     }
   }
