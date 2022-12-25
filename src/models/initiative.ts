@@ -11,13 +11,13 @@ export interface InitiativeI {
   areas: string;
   services: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   postalCode: string;
   city: string;
   country: string;
   createdByUser: UserI;
-  subscribedUsers: UserI[];
+  subscribedUsers?: UserI[];
   goals: GoalI[];
   createdAt: Date;
 }
@@ -59,11 +59,11 @@ export const Initiative = model(
       required: true,
     },
     startDate: {
-      type: String,
+      type: Date,
       required: true,
     },
     endDate: {
-      type: String,
+      type: Date,
       required: true,
     },
     postalCode: {
@@ -86,11 +86,9 @@ export const Initiative = model(
     subscribedUsers: {
       type: [
         {
-          user: {
-            type: Schema.Types.ObjectId,
-            required: true,
-            ref: 'User',
-          },
+          type: Schema.Types.ObjectId,
+          required: true,
+          ref: 'User',
         },
       ],
     },
@@ -98,11 +96,9 @@ export const Initiative = model(
       required: true,
       type: [
         {
-          goal: {
-            type: Schema.Types.ObjectId,
-            required: true,
-            ref: 'Goal',
-          },
+          type: Schema.Types.ObjectId,
+          required: true,
+          ref: 'Goal',
         },
       ],
     },
