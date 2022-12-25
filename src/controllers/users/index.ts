@@ -1,2 +1,3 @@
-export * from './createUser';
-export * from './getUsers';
+export * from './create';
+export * from './getAll';
+export * from './getOne';
