@@ -1,13 +1,10 @@
 import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
-import { CreateGoalController } from './controllers/goals';
-import { DeleteGoalController } from './controllers/goals/delete';
-import { GetGoalsController } from './controllers/goals/getAll';
-import { CreateUserController, GetUsersController } from './controllers/users';
-import { CreateGoalRepository, GetGoalsRepository } from './repositories/goals';
-import { DeleteGoalRepository } from './repositories/goals/delete';
-import { CreateUserRepository, GetUsersRepository } from './repositories/users';
+import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
+import { CreateUserController, GetUserController, GetUsersController } from './controllers/users';
+import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
+import { CreateUserRepository, GetUserRepository, GetUsersRepository } from './repositories/users';
 
 config();
 
@@ -50,6 +47,13 @@ mongoose
       const createUserRepository = new CreateUserRepository();
       const createUserControllers = new CreateUserController(createUserRepository);
       const { body, statusCode } = await createUserControllers.handle({ body: req.body });
+      res.status(statusCode).send(body);
+    });
+
+    app.get('/users/:id', async (req, res) => {
+      const getUserRepository = new GetUserRepository();
+      const getUserControllers = new GetUserController(getUserRepository);
+      const { body, statusCode } = await getUserControllers.handle({ params: req.params });
       res.status(statusCode).send(body);
     });
 
