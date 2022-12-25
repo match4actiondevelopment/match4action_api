@@ -1,11 +1,11 @@
-import { GoalI } from '../../models/goals';
+import { IGoal } from '../../models/goals';
 import { badRequest, created, serverError } from '../../utils/helpers';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
 import { CreateGoalParams, ICreateGoalRepository } from './types';
 
 export class CreateGoalController implements IController {
   constructor(private readonly createGoalRepository: ICreateGoalRepository) {}
-  async handle(httpRequest: HttpRequest<CreateGoalParams>): Promise<HttpResponse<GoalI | string>> {
+  async handle(httpRequest: HttpRequest<CreateGoalParams>): Promise<HttpResponse<IGoal | string>> {
     try {
       const requiredFields = ['name', 'orderId'];
 
@@ -16,7 +16,7 @@ export class CreateGoalController implements IController {
       }
 
       const goal = await this.createGoalRepository.create(httpRequest.body!);
-      return created<GoalI>(goal);
+      return created<IGoal>(goal);
     } catch (error) {
       return serverError((error as Error).message);
     }

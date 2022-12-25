@@ -1,8 +1,8 @@
 import { CreateGoalParams, ICreateGoalRepository } from '../../controllers/goals/types';
-import { Goal, GoalI } from '../../models/goals';
+import { Goal, IGoal } from '../../models/goals';
 
 export class CreateGoalRepository implements ICreateGoalRepository {
-  async create(params: CreateGoalParams): Promise<GoalI> {
+  async create(params: CreateGoalParams): Promise<IGoal> {
     const goal = await Goal.findOne({
       name: params.name,
     });

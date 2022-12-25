@@ -1,4 +1,4 @@
-import { GoalI } from '../../../models/goals';
+import { IGoal } from '../../../models/goals';
 
 export interface CreateGoalParams {
   orderId: number;
@@ -6,11 +6,11 @@ export interface CreateGoalParams {
 }
 
 export interface ICreateGoalRepository {
-  create(params: CreateGoalParams): Promise<GoalI>;
+  create(params: CreateGoalParams): Promise<IGoal>;
 }
 
 export interface IGetGoalsRepository {
-  getGoals(): Promise<GoalI[]>;
+  getGoals(): Promise<IGoal[]>;
 }
 
 export interface IDeleteGoalRepository {

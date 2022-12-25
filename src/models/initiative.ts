@@ -1,5 +1,5 @@
 import { model, Schema } from 'mongoose';
-import { GoalI } from './goals';
+import { IGoal } from './goals';
 import { UserI } from './user';
 
 export interface IInitiative {
@@ -18,7 +18,7 @@ export interface IInitiative {
   country: string;
   createdByUser: UserI;
   subscribedUsers?: UserI[];
-  goals: GoalI[];
+  goals: IGoal[];
   createdAt: Date;
 }
 

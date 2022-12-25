@@ -20,14 +20,14 @@ export enum GoalsEnum {
   'GOAL_17' = 'Partnerships to achieve the Goal',
 }
 
-export interface GoalI {
+export interface IGoal {
   orderId: number;
   name: string;
 }
 
 export const Goal = model(
   'Goal',
-  new Schema<GoalI>({
+  new Schema<IGoal>({
     name: {
       type: String,
       enum: Object.values(GoalsEnum),
