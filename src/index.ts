@@ -3,8 +3,10 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
 import { CreateUserController, GetUserController, GetUsersController } from './controllers/users';
+import { DeleteUserController } from './controllers/users/delete';
 import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
 import { CreateUserRepository, GetUserRepository, GetUsersRepository } from './repositories/users';
+import { DeleteUserRepository } from './repositories/users/delete';
 
 config();
 
@@ -54,6 +56,13 @@ mongoose
       const getUserRepository = new GetUserRepository();
       const getUserControllers = new GetUserController(getUserRepository);
       const { body, statusCode } = await getUserControllers.handle({ params: req.params });
+      res.status(statusCode).send(body);
+    });
+
+    app.delete('/users/:id', async (req, res) => {
+      const deleteUserRepository = new DeleteUserRepository();
+      const deleteUserControllers = new DeleteUserController(deleteUserRepository);
+      const { body, statusCode } = await deleteUserControllers.handle({ params: req.params });
       res.status(statusCode).send(body);
     });
 

@@ -12,20 +12,20 @@ export class CreateUserController implements IController {
 
       for (const field of requiredFields) {
         if (!httpRequest?.body?.[field as keyof CreateUserParams]?.length) {
-          return badRequest(`Field ${field} is required`);
+          return badRequest(`Field ${field} is required.`);
         }
       }
 
       const emailIsValid = validator.isEmail(httpRequest.body!.email);
 
       if (!emailIsValid) {
-        return badRequest('Email is invalid');
+        return badRequest('Email is invalid.');
       }
 
       const user = await this.createUserRepository.createUser(httpRequest.body!);
       return created<UserI>(user);
     } catch (error) {
-      return serverError();
+      return serverError((error as Error).message);
     }
   }
 }

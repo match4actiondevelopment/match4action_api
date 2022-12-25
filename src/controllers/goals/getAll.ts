@@ -11,7 +11,7 @@ export class GetGoalsController implements IController {
       const goals = await this.getGoalsRepository.getGoals();
       return ok<GoalI[]>(goals);
     } catch (error) {
-      return serverError();
+      return serverError((error as Error).message);
     }
   }
 }

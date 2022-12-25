@@ -8,7 +8,7 @@ export class CreateGoalRepository implements ICreateGoalRepository {
     });
 
     if (goal) {
-      throw new Error('Goal already created');
+      throw new Error('Goal already created.');
     }
 
     const { id } = await Goal.create(params);
@@ -16,7 +16,7 @@ export class CreateGoalRepository implements ICreateGoalRepository {
     const createdGoal = await Goal.findById(id);
 
     if (!createdGoal) {
-      throw new Error('Goal not created');
+      throw new Error('Goal not created.');
     }
 
     return createdGoal;

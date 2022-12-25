@@ -11,7 +11,7 @@ export class GetUsersController implements IController {
       const users = await this.getUsersRepository.getUsers();
       return ok<UserI[]>(users);
     } catch (error) {
-      return serverError();
+      return serverError((error as Error).message);
     }
   }
 }

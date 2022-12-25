@@ -9,7 +9,7 @@ export class DeleteGoalRepository implements IDeleteGoalRepository {
     const goal = await Goal.findById(objectId);
 
     if (!goal) {
-      throw new Error('User not created');
+      throw new Error('Goal not found.');
     }
 
     const deletedGoal = await Goal.findOneAndDelete(objectId);

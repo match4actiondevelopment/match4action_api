@@ -8,7 +8,7 @@ export class CreateUserRepository implements ICreateUsersRepository {
     const user = await User.findById(id);
 
     if (!user) {
-      throw new Error('User not created');
+      throw new Error('User not created.');
     }
 
     return user;

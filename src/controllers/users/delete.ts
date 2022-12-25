@@ -1,12 +1,12 @@
 import { ok, serverError } from '../../utils/helpers';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
-import { IDeleteGoalRepository } from './types';
+import { IDeleteUserRepository } from './types';
 
-export class DeleteGoalController implements IController {
-  constructor(private readonly deleteGoalRepository: IDeleteGoalRepository) {}
+export class DeleteUserController implements IController {
+  constructor(private readonly deleteUserRepository: IDeleteUserRepository) {}
   async handle(httpRequest: HttpRequest<unknown>): Promise<HttpResponse<{ success: boolean } | string>> {
     try {
-      const isSuccess = await this.deleteGoalRepository.delete(httpRequest?.params?.id);
+      const isSuccess = await this.deleteUserRepository.delete(httpRequest?.params?.id);
 
       return ok<{ success: boolean }>(isSuccess);
     } catch (error) {

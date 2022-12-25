@@ -11,14 +11,14 @@ export class CreateGoalController implements IController {
 
       for (const field of requiredFields) {
         if (!httpRequest?.body?.[field as keyof CreateGoalParams]?.toString()?.length) {
-          return badRequest(`Field ${field} is required`);
+          return badRequest(`Field ${field} is required.`);
         }
       }
 
       const goal = await this.createGoalRepository.create(httpRequest.body!);
       return created<GoalI>(goal);
     } catch (error) {
-      return serverError();
+      return serverError((error as Error).message);
     }
   }
 }
