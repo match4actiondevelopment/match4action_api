@@ -1,4 +1,8 @@
-import { InitiativeI } from '../../../models/initiative';
+import { IInitiative } from '../../../models/initiative';
+
+export interface IGetInitiativesRepository {
+  getAll(): Promise<IInitiative[]>;
+}
 
 export interface CreateInitiativeParams {
   image: string[];
@@ -19,5 +23,5 @@ export interface CreateInitiativeParams {
 }
 
 export interface ICreateInitiativeRepository {
-  create(params: CreateInitiativeParams): Promise<InitiativeI>;
+  create(params: CreateInitiativeParams): Promise<IInitiative>;
 }
