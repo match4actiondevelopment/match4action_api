@@ -3,10 +3,11 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
 import { CreateInitiativeController } from './controllers/initiatives';
+import { GetInitiativesController } from './controllers/initiatives/getAll';
 import { CreateUserController, GetUserController, GetUsersController } from './controllers/users';
 import { DeleteUserController } from './controllers/users/delete';
 import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
-import { CreateInitiativeRepository } from './repositories/initiatives';
+import { CreateInitiativeRepository, GetInitiativesRepository } from './repositories/initiatives';
 import { CreateUserRepository, GetUserRepository, GetUsersRepository } from './repositories/users';
 import { DeleteUserRepository } from './repositories/users/delete';
 
@@ -86,6 +87,13 @@ mongoose
       const deleteGoalRepository = new DeleteGoalRepository();
       const deleteGoalController = new DeleteGoalController(deleteGoalRepository);
       const { body, statusCode } = await deleteGoalController.handle({ params: req.params });
+      res.status(statusCode).send(body);
+    });
+
+    app.get('/initiatives', async (req, res) => {
+      const getInitiativesRepository = new GetInitiativesRepository();
+      const getInitiativesControllers = new GetInitiativesController(getInitiativesRepository);
+      const { body, statusCode } = await getInitiativesControllers.handle();
       res.status(statusCode).send(body);
     });
 
