@@ -1,7 +1,9 @@
 import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
+import { CreateGoalController } from './controllers/goals';
 import { CreateUserController, GetUsersController } from './controllers/users';
+import { CreateGoalRepository } from './repositories/goals';
 import { CreateUserRepository, GetUsersRepository } from './repositories/users';
 
 config();
@@ -45,7 +47,13 @@ mongoose
       const createUserRepository = new CreateUserRepository();
       const createUserControllers = new CreateUserController(createUserRepository);
       const { body, statusCode } = await createUserControllers.handle({ body: req.body });
-      console.log(statusCode);
+      res.status(statusCode).send(body);
+    });
+
+    app.post('/goals', async (req, res) => {
+      const createGoalRepository = new CreateGoalRepository();
+      const getUsersControllers = new CreateGoalController(createGoalRepository);
+      const { body, statusCode } = await getUsersControllers.handle({ body: req.body });
       res.status(statusCode).send(body);
     });
 
