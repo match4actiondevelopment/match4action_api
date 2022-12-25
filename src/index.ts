@@ -2,14 +2,21 @@ import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
 import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
-import { CreateInitiativeController } from './controllers/initiatives';
-import { GetInitiativesController } from './controllers/initiatives/getAll';
-import { CreateUserController, GetUserController, GetUsersController } from './controllers/users';
-import { DeleteUserController } from './controllers/users/delete';
+import {
+  CreateInitiativeController,
+  GetInitiativeController,
+  GetInitiativesController,
+} from './controllers/initiatives';
+import { CreateUserController, DeleteUserController, GetUserController, GetUsersController } from './controllers/users';
 import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
 import { CreateInitiativeRepository, GetInitiativesRepository } from './repositories/initiatives';
-import { CreateUserRepository, GetUserRepository, GetUsersRepository } from './repositories/users';
-import { DeleteUserRepository } from './repositories/users/delete';
+import { GetInitiativeRepository } from './repositories/initiatives/getOne';
+import {
+  CreateUserRepository,
+  DeleteUserRepository,
+  GetUserRepository,
+  GetUsersRepository,
+} from './repositories/users';
 
 config();
 
@@ -101,6 +108,13 @@ mongoose
       const createInitiativeRepository = new CreateInitiativeRepository();
       const createInitiativeControllers = new CreateInitiativeController(createInitiativeRepository);
       const { body, statusCode } = await createInitiativeControllers.handle({ body: req.body });
+      res.status(statusCode).send(body);
+    });
+
+    app.get('/initiatives/:id', async (req, res) => {
+      const getInitiativeRepository = new GetInitiativeRepository();
+      const getInitiativesControllers = new GetInitiativeController(getInitiativeRepository);
+      const { body, statusCode } = await getInitiativesControllers.handle({ params: req.params });
       res.status(statusCode).send(body);
     });
 
