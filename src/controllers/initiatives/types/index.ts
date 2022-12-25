@@ -25,3 +25,7 @@ export interface CreateInitiativeParams {
 export interface ICreateInitiativeRepository {
   create(params: CreateInitiativeParams): Promise<IInitiative>;
 }
+
+export interface IGetInitiativeRepository {
+  getOne(id: string): Promise<IInitiative>;
+}
