@@ -8,3 +8,11 @@ export interface CreateGoalParams {
 export interface ICreateGoalRepository {
   create(params: CreateGoalParams): Promise<GoalI>;
 }
+
+export interface IGetGoalsRepository {
+  getGoals(): Promise<GoalI[]>;
+}
+
+export interface IDeleteGoalRepository {
+  delete(id: string): Promise<{ success: boolean }>;
+}

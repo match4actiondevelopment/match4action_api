@@ -2,8 +2,11 @@ import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
 import { CreateGoalController } from './controllers/goals';
+import { DeleteGoalController } from './controllers/goals/delete';
+import { GetGoalsController } from './controllers/goals/getAll';
 import { CreateUserController, GetUsersController } from './controllers/users';
-import { CreateGoalRepository } from './repositories/goals';
+import { CreateGoalRepository, GetGoalsRepository } from './repositories/goals';
+import { DeleteGoalRepository } from './repositories/goals/delete';
 import { CreateUserRepository, GetUsersRepository } from './repositories/users';
 
 config();
@@ -50,10 +53,24 @@ mongoose
       res.status(statusCode).send(body);
     });
 
+    app.get('/goals', async (req, res) => {
+      const getGoalsRepository = new GetGoalsRepository();
+      const getGoalsController = new GetGoalsController(getGoalsRepository);
+      const { body, statusCode } = await getGoalsController.handle();
+      res.status(statusCode).send(body);
+    });
+
     app.post('/goals', async (req, res) => {
       const createGoalRepository = new CreateGoalRepository();
       const getUsersControllers = new CreateGoalController(createGoalRepository);
       const { body, statusCode } = await getUsersControllers.handle({ body: req.body });
+      res.status(statusCode).send(body);
+    });
+
+    app.delete('/goals/:id', async (req, res) => {
+      const deleteGoalRepository = new DeleteGoalRepository();
+      const deleteGoalController = new DeleteGoalController(deleteGoalRepository);
+      const { body, statusCode } = await deleteGoalController.handle({ params: req.params });
       res.status(statusCode).send(body);
     });
 
