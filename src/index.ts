@@ -2,9 +2,11 @@ import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
 import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
+import { CreateInitiativeController } from './controllers/initiatives';
 import { CreateUserController, GetUserController, GetUsersController } from './controllers/users';
 import { DeleteUserController } from './controllers/users/delete';
 import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
+import { CreateInitiativeRepository } from './repositories/initiatives';
 import { CreateUserRepository, GetUserRepository, GetUsersRepository } from './repositories/users';
 import { DeleteUserRepository } from './repositories/users/delete';
 
@@ -75,8 +77,8 @@ mongoose
 
     app.post('/goals', async (req, res) => {
       const createGoalRepository = new CreateGoalRepository();
-      const getUsersControllers = new CreateGoalController(createGoalRepository);
-      const { body, statusCode } = await getUsersControllers.handle({ body: req.body });
+      const createGoalControllers = new CreateGoalController(createGoalRepository);
+      const { body, statusCode } = await createGoalControllers.handle({ body: req.body });
       res.status(statusCode).send(body);
     });
 
@@ -84,6 +86,13 @@ mongoose
       const deleteGoalRepository = new DeleteGoalRepository();
       const deleteGoalController = new DeleteGoalController(deleteGoalRepository);
       const { body, statusCode } = await deleteGoalController.handle({ params: req.params });
+      res.status(statusCode).send(body);
+    });
+
+    app.post('/initiatives', async (req, res) => {
+      const createInitiativeRepository = new CreateInitiativeRepository();
+      const createInitiativeControllers = new CreateInitiativeController(createInitiativeRepository);
+      const { body, statusCode } = await createInitiativeControllers.handle({ body: req.body });
       res.status(statusCode).send(body);
     });
 
