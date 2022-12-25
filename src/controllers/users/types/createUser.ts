@@ -1,12 +1,15 @@
-import { User } from '../../../models/user';
+import { UserI } from '../../../models/user';
 
 export interface CreateUserParams {
   firstName: string;
   lastName: string;
-  email: string;
   password: string;
+  email: string;
+  location?: string;
+  bio?: string;
+  profileImage?: string;
 }
 
 export interface ICreateUsersRepository {
-  createUser(params: CreateUserParams): Promise<User>;
+  createUser(params: CreateUserParams): Promise<UserI>;
 }

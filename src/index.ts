@@ -1,35 +1,56 @@
 import { config } from 'dotenv';
 import express from 'express';
+import mongoose from 'mongoose';
 import { CreateUserController, GetUsersController } from './controllers/users';
-import { mongoClient } from './database/config';
-import { CreateUserRepository } from './repositories/create-user';
-import { GetUsersRepository } from './repositories/get-users';
+import { CreateUserRepository, GetUsersRepository } from './repositories/users';
 
-const main = async () => {
-  config();
-  const app = express();
+config();
 
-  app.use(express.json());
+const url = process.env.MONGODB_URL as string;
+const username = process.env.MONGODB_USERNAME;
+const password = process.env.MONGODB_PASSWORD;
+const port = process.env.PORT || 3003;
 
-  const port = process.env.PORT || 3003;
-  await mongoClient.connect();
+mongoose.set('strictQuery', false);
+mongoose.set('toJSON', {
+  virtuals: true,
+  transform: (doc, converted) => {
+    delete converted.__v;
+    delete converted._id;
+  },
+});
 
-  app.get('/users', async (req, res) => {
-    const getUsersRepository = new GetUsersRepository();
-    const getUsersControllers = new GetUsersController(getUsersRepository);
-    const { body, statusCode } = await getUsersControllers.handle();
-    res.status(statusCode).send(body);
-  });
+mongoose
+  .connect(url, {
+    auth: {
+      password,
+      username,
+    },
+  })
+  .then(() => {
+    console.log('mongo connected');
 
-  app.post('/users', async (req, res) => {
-    const createUserRepository = new CreateUserRepository();
-    const createUserControllers = new CreateUserController(createUserRepository);
-    const { body, statusCode } = await createUserControllers.handle({ body: req.body });
-    console.log(statusCode);
-    res.status(statusCode).send(body);
-  });
+    const app = express();
 
-  app.listen(port, () => console.log(`listening on port: ${port}!`));
-};
+    app.use(express.json());
 
-main();
+    app.get('/users', async (req, res) => {
+      const getUsersRepository = new GetUsersRepository();
+      const getUsersControllers = new GetUsersController(getUsersRepository);
+      const { body, statusCode } = await getUsersControllers.handle();
+      res.status(statusCode).send(body);
+    });
+
+    app.post('/users', async (req, res) => {
+      const createUserRepository = new CreateUserRepository();
+      const createUserControllers = new CreateUserController(createUserRepository);
+      const { body, statusCode } = await createUserControllers.handle({ body: req.body });
+      console.log(statusCode);
+      res.status(statusCode).send(body);
+    });
+
+    app.listen(port, () => {
+      console.log(`server is running on: http://localhost:${port}`);
+    });
+  })
+  .catch((err) => console.log('error connecting to mongo', err));

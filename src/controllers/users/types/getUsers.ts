@@ -1,5 +1,5 @@
-import { User } from '../../../models/user';
+import { UserI } from '../../../models/user';
 
 export interface IGetUsersRepository {
-  getUsers(): Promise<User[]>;
+  getUsers(): Promise<UserI[]>;
 }
