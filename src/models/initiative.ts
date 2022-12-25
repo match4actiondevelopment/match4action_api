@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 import { GoalI } from './goals';
 import { UserI } from './user';
 
-export interface InitiativeI {
+export interface IInitiative {
   image: string[];
   eventTimeFrame: string;
   eventType: string;
@@ -24,7 +24,7 @@ export interface InitiativeI {
 
 export const Initiative = model(
   'Initiative',
-  new Schema<InitiativeI>({
+  new Schema<IInitiative>({
     image: {
       type: [String],
       required: true,

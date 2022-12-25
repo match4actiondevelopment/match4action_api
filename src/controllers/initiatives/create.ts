@@ -1,11 +1,11 @@
-import { InitiativeI } from '../../models/initiative';
+import { IInitiative } from '../../models/initiative';
 import { badRequest, created, serverError } from '../../utils/helpers';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
 import { CreateInitiativeParams, ICreateInitiativeRepository } from './types';
 
 export class CreateInitiativeController implements IController {
   constructor(private readonly createInitiativeRepository: ICreateInitiativeRepository) {}
-  async handle(httpRequest: HttpRequest<CreateInitiativeParams>): Promise<HttpResponse<InitiativeI | string>> {
+  async handle(httpRequest: HttpRequest<CreateInitiativeParams>): Promise<HttpResponse<IInitiative | string>> {
     try {
       const requiredFields = [
         'image',
@@ -32,7 +32,7 @@ export class CreateInitiativeController implements IController {
       }
 
       const initiative = await this.createInitiativeRepository.create(httpRequest.body!);
-      return created<InitiativeI>(initiative);
+      return created<IInitiative>(initiative);
     } catch (error) {
       return serverError((error as Error).message);
     }
