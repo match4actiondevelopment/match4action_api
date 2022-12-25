@@ -1,12 +1,12 @@
 import validator from 'validator';
-import { UserI } from '../../models/user';
+import { IUser } from '../../models/user';
 import { badRequest, created, serverError } from '../../utils/helpers';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
 import { CreateUserParams, ICreateUsersRepository } from './types';
 
 export class CreateUserController implements IController {
   constructor(private readonly createUserRepository: ICreateUsersRepository) {}
-  async handle(httpRequest: HttpRequest<CreateUserParams>): Promise<HttpResponse<UserI | string>> {
+  async handle(httpRequest: HttpRequest<CreateUserParams>): Promise<HttpResponse<IUser | string>> {
     try {
       const requiredFields = ['firstName', 'lastName', 'email', 'password'];
 
@@ -23,7 +23,7 @@ export class CreateUserController implements IController {
       }
 
       const user = await this.createUserRepository.createUser(httpRequest.body!);
-      return created<UserI>(user);
+      return created<IUser>(user);
     } catch (error) {
       return serverError((error as Error).message);
     }

@@ -1,7 +1,7 @@
-import { UserI } from '../../../models/user';
+import { IUser } from '../../../models/user';
 
 export interface IGetUsersRepository {
-  getUsers(): Promise<UserI[]>;
+  getUsers(): Promise<IUser[]>;
 }
 
 export interface CreateUserParams {
@@ -15,11 +15,11 @@ export interface CreateUserParams {
 }
 
 export interface ICreateUsersRepository {
-  createUser(params: CreateUserParams): Promise<UserI>;
+  createUser(params: CreateUserParams): Promise<IUser>;
 }
 
 export interface IGetUserRepository {
-  get(id: string): Promise<UserI>;
+  get(id: string): Promise<IUser>;
 }
 
 export interface IDeleteUserRepository {

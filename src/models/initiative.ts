@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
 import { IGoal } from './goals';
-import { UserI } from './user';
+import { IUser } from './user';
 
 export interface IInitiative {
   image: string[];
@@ -16,8 +16,8 @@ export interface IInitiative {
   postalCode: string;
   city: string;
   country: string;
-  createdByUser: UserI;
-  subscribedUsers?: UserI[];
+  createdByUser: IUser;
+  subscribedUsers?: IUser[];
   goals: IGoal[];
   createdAt: Date;
 }

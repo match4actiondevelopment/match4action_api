@@ -1,8 +1,8 @@
 import { IGetUserRepository } from '../../controllers/users/types';
-import { User, UserI } from '../../models/user';
+import { IUser, User } from '../../models/user';
 
 export class GetUserRepository implements IGetUserRepository {
-  async get(id: string): Promise<UserI> {
+  async get(id: string): Promise<IUser> {
     const user = await User.findById(id);
 
     if (!user) {
