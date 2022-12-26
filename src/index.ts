@@ -1,7 +1,8 @@
+import cors from 'cors';
 import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
-
+import morgan from 'morgan';
 import router from './router';
 
 config();
@@ -14,7 +15,7 @@ const port = process.env.PORT || 3003;
 mongoose.set('strictQuery', false);
 mongoose.set('toJSON', {
   virtuals: true,
-  transform: (doc, converted) => {
+  transform: (_, converted) => {
     delete converted.__v;
     delete converted._id;
   },
@@ -32,6 +33,8 @@ mongoose
 
     const app = express();
 
+    app.use(cors());
+    app.use(morgan('dev'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
