@@ -7,9 +7,11 @@ import {
   GetInitiativeController,
   GetInitiativesController,
 } from './controllers/initiatives';
+import { DeleteInitiativeController } from './controllers/initiatives/delete';
 import { CreateUserController, DeleteUserController, GetUserController, GetUsersController } from './controllers/users';
 import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
 import { CreateInitiativeRepository, GetInitiativesRepository } from './repositories/initiatives';
+import { DeleteInitiativeRepository } from './repositories/initiatives/delete';
 import { GetInitiativeRepository } from './repositories/initiatives/getOne';
 import {
   CreateUserRepository,
@@ -114,6 +116,13 @@ mongoose
     app.get('/initiatives/:id', async (req, res) => {
       const getInitiativeRepository = new GetInitiativeRepository();
       const getInitiativesControllers = new GetInitiativeController(getInitiativeRepository);
+      const { body, statusCode } = await getInitiativesControllers.handle({ params: req.params });
+      res.status(statusCode).send(body);
+    });
+
+    app.delete('/initiatives/:id', async (req, res) => {
+      const getInitiativeRepository = new DeleteInitiativeRepository();
+      const getInitiativesControllers = new DeleteInitiativeController(getInitiativeRepository);
       const { body, statusCode } = await getInitiativesControllers.handle({ params: req.params });
       res.status(statusCode).send(body);
     });
