@@ -29,3 +29,7 @@ export interface ICreateInitiativeRepository {
 export interface IGetInitiativeRepository {
   getOne(id: string): Promise<IInitiative>;
 }
+
+export interface IDeleteInitiativeRepository {
+  delete(id: string): Promise<{ success: boolean }>;
+}
