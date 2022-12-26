@@ -1,4 +1,4 @@
-import { IUpdateGoalRepository, UpdateGoalParams } from '../../controllers/goals/types';
+import { IUpdateGoalRepository, UpdateGoalParams } from '../../business/goals/types';
 import { Goal, IGoal } from '../../models/goals';
 
 export class UpdateGoalRepository implements IUpdateGoalRepository {

@@ -1,4 +1,4 @@
-import { CreateUserParams, ICreateUsersRepository } from '../../controllers/users/types';
+import { CreateUserParams, ICreateUsersRepository } from '../../business/users/types';
 import { IUser, User } from '../../models/user';
 
 export class CreateUserRepository implements ICreateUsersRepository {

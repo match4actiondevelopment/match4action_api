@@ -1,4 +1,4 @@
-import { IUpdateUserRepository, UpdateUserParams } from '../../controllers/users/types';
+import { IUpdateUserRepository, UpdateUserParams } from '../../business/users/types';
 import { IUser, User } from '../../models/user';
 
 export class UpdateUserRepository implements IUpdateUserRepository {

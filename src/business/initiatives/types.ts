@@ -1,4 +1,4 @@
-import { IInitiative } from '../../../models/initiative';
+import { IInitiative } from '../../models/initiative';
 
 export interface IGetInitiativesRepository {
   getAll(): Promise<IInitiative[]>;

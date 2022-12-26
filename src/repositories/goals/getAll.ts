@@ -1,4 +1,4 @@
-import { IGetGoalsRepository } from '../../controllers/goals/types';
+import { IGetGoalsRepository } from '../../business/goals/types';
 import { Goal, IGoal } from '../../models/goals';
 
 export class GetGoalsRepository implements IGetGoalsRepository {

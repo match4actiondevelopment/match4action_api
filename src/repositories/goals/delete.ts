@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IDeleteGoalRepository } from '../../controllers/goals/types';
+import { IDeleteGoalRepository } from '../../business/goals/types';
 import { Goal } from '../../models/goals';
 
 export class DeleteGoalRepository implements IDeleteGoalRepository {

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IDeleteInitiativeRepository } from '../../controllers/initiatives/types';
+import { IDeleteInitiativeRepository } from '../../business/initiatives/types';
 import { Initiative } from '../../models/initiative';
 
 export class DeleteInitiativeRepository implements IDeleteInitiativeRepository {

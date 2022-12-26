@@ -1,4 +1,4 @@
-import { IGetInitiativesRepository } from '../../controllers/initiatives/types';
+import { IGetInitiativesRepository } from '../../business/initiatives/types';
 import { IInitiative, Initiative } from '../../models/initiative';
 
 export class GetInitiativesRepository implements IGetInitiativesRepository {

@@ -1,4 +1,4 @@
-import { ISignInUserRepository, SignInUserParams } from '../../controllers/users/types';
+import { ISignInUserRepository, SignInUserParams } from '../../business/users/types';
 import { IUser, User } from '../../models/user';
 import { comparePasswords } from '../../utils/bcrypt';
 

@@ -1,4 +1,4 @@
-import { CreateGoalParams, ICreateGoalRepository } from '../../controllers/goals/types';
+import { CreateGoalParams, ICreateGoalRepository } from '../../business/goals/types';
 import { Goal, IGoal } from '../../models/goals';
 
 export class CreateGoalRepository implements ICreateGoalRepository {

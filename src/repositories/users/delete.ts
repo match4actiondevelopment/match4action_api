@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IDeleteUserRepository } from '../../controllers/users/types';
+import { IDeleteUserRepository } from '../../business/users/types';
 import { User } from '../../models/user';
 
 export class DeleteUserRepository implements IDeleteUserRepository {

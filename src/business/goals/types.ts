@@ -1,4 +1,4 @@
-import { IGoal } from '../../../models/goals';
+import { IGoal } from '../../models/goals';
 
 export interface CreateGoalParams {
   orderId: number;

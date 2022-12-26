@@ -1,4 +1,4 @@
-import { CreateInitiativeParams, ICreateInitiativeRepository } from '../../controllers/initiatives/types';
+import { CreateInitiativeParams, ICreateInitiativeRepository } from '../../business/initiatives/types';
 import { IInitiative, Initiative } from '../../models/initiative';
 
 export class CreateInitiativeRepository implements ICreateInitiativeRepository {

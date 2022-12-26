@@ -1,4 +1,4 @@
-import { IGetUserRepository } from '../../controllers/users/types';
+import { IGetUserRepository } from '../../business/users/types';
 import { IUser, User } from '../../models/user';
 
 export class GetUserRepository implements IGetUserRepository {
