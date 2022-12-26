@@ -1,7 +1,12 @@
 import { config } from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
-import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
+import {
+  CreateGoalController,
+  DeleteGoalController,
+  GetGoalsController,
+  UpdateGoalController,
+} from './controllers/goals';
 import {
   CreateInitiativeController,
   DeleteInitiativeController,
@@ -15,7 +20,12 @@ import {
   GetUsersController,
   UpdateUserController,
 } from './controllers/users';
-import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
+import {
+  CreateGoalRepository,
+  DeleteGoalRepository,
+  GetGoalsRepository,
+  UpdateGoalRepository,
+} from './repositories/goals';
 import {
   CreateInitiativeRepository,
   DeleteInitiativeRepository,
@@ -107,6 +117,13 @@ mongoose
       const createGoalRepository = new CreateGoalRepository();
       const createGoalControllers = new CreateGoalController(createGoalRepository);
       const { body, statusCode } = await createGoalControllers.handle({ body: req.body });
+      res.status(statusCode).send(body);
+    });
+
+    app.put('/goals/:id', async (req, res) => {
+      const updateGoalRepository = new UpdateGoalRepository();
+      const updateGoalController = new UpdateGoalController(updateGoalRepository);
+      const { body, statusCode } = await updateGoalController.handle({ body: req.body, params: req.params });
       res.status(statusCode).send(body);
     });
 
