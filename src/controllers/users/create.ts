@@ -2,6 +2,7 @@ import validator from 'validator';
 import { IUser } from '../../models/user';
 import { hashPassword } from '../../utils/bcrypt';
 import { badRequest, created, serverError } from '../../utils/helpers';
+import { createJWT } from '../../utils/jwt';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
 import { CreateUserParams, ICreateUsersRepository } from './types';
 
@@ -29,7 +30,10 @@ export class CreateUserController implements IController {
         ...httpRequest.body!,
         password: newPassword,
       });
-      return created<IUser>(user);
+
+      const token = createJWT(user);
+
+      return created<IUser>({ user, token });
     } catch (error) {
       return serverError((error as Error).message);
     }

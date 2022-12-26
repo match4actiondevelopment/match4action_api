@@ -18,6 +18,7 @@ import {
   GetUsersController,
   UpdateUserController,
 } from './controllers/users';
+import { SignInUserController } from './controllers/users/signIn';
 import {
   CreateGoalRepository,
   DeleteGoalRepository,
@@ -35,6 +36,7 @@ import {
   DeleteUserRepository,
   GetUserRepository,
   GetUsersRepository,
+  SignInUserRepository,
   UpdateUserRepository,
 } from './repositories/users';
 
@@ -56,6 +58,7 @@ const getInitiativesRepository = new GetInitiativesRepository();
 const getInitiativeRepository = new GetInitiativeRepository();
 const createInitiativeRepository = new CreateInitiativeRepository();
 const deleteInitiativeRepository = new DeleteInitiativeRepository();
+const signInUserRepository = new SignInUserRepository();
 
 /*
   controller
@@ -73,12 +76,18 @@ const getInitiativesControllers = new GetInitiativesController(getInitiativesRep
 const createInitiativeControllers = new CreateInitiativeController(createInitiativeRepository);
 const getInitiativeController = new GetInitiativeController(getInitiativeRepository);
 const deleteInitiativeControllers = new DeleteInitiativeController(deleteInitiativeRepository);
+const signInUserControllers = new SignInUserController(signInUserRepository);
 
 /*
   users
 */
 router.get('/users', async (req, res) => {
   const { body, statusCode } = await getUsersControllers.handle();
+  res.status(statusCode).send(body);
+});
+
+router.post('/sign-in', async (req, res) => {
+  const { body, statusCode } = await signInUserControllers.handle({ body: req.body });
   res.status(statusCode).send(body);
 });
 

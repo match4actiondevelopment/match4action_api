@@ -40,3 +40,11 @@ export interface UpdateUserParams {
 export interface IUpdateUserRepository {
   update(params: UpdateUserParams, id: string): Promise<IUser>;
 }
+
+export interface SignInUserParams {
+  password: string;
+  email: string;
+}
+export interface ISignInUserRepository {
+  signIn(params: SignInUserParams): Promise<IUser>;
+}
