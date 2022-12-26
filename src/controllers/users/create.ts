@@ -1,5 +1,6 @@
 import validator from 'validator';
 import { IUser } from '../../models/user';
+import { hashPassword } from '../../utils/bcrypt';
 import { badRequest, created, serverError } from '../../utils/helpers';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
 import { CreateUserParams, ICreateUsersRepository } from './types';
@@ -16,13 +17,18 @@ export class CreateUserController implements IController {
         }
       }
 
-      const emailIsValid = validator.isEmail(httpRequest.body!.email);
+      const emailIsValid = validator.isEmail(httpRequest?.body!.email);
 
       if (!emailIsValid) {
         return badRequest('Email is invalid.');
       }
 
-      const user = await this.createUserRepository.createUser(httpRequest.body!);
+      const newPassword = await hashPassword(httpRequest?.body!.password);
+
+      const user = await this.createUserRepository.createUser({
+        ...httpRequest.body!,
+        password: newPassword,
+      });
       return created<IUser>(user);
     } catch (error) {
       return serverError((error as Error).message);

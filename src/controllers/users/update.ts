@@ -1,5 +1,6 @@
 import validator from 'validator';
 import { IUser } from '../../models/user';
+import { hashPassword } from '../../utils/bcrypt';
 import { badRequest, ok, serverError } from '../../utils/helpers';
 import { HttpRequest, HttpResponse, IController } from '../protocols';
 import { CreateUserParams, IUpdateUserRepository, UpdateUserParams } from './types';
@@ -22,9 +23,17 @@ export class UpdateUserController implements IController {
         return badRequest('Email is invalid.');
       }
 
+      const newPassword = await hashPassword(httpRequest?.body!.password);
+
       // verify that the user that is requesting to change their data is really him
 
-      const user = await this.updateUserRepository.update(httpRequest.body!, httpRequest?.params?.id);
+      const user = await this.updateUserRepository.update(
+        {
+          ...httpRequest.body!,
+          password: newPassword,
+        },
+        httpRequest?.params?.id
+      );
       return ok<IUser>(user);
     } catch (error) {
       return serverError((error as Error).message);
