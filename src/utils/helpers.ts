@@ -1,4 +1,4 @@
-import { HttpResponse, HttpStatusCode } from '../controllers/protocols';
+import { HttpResponse, HttpStatusCode } from '../utils/protocols';
 
 export const badRequest = (message: string): HttpResponse<string> => {
   return {

@@ -1,9 +1,9 @@
 import validator from 'validator';
-import { IUser } from '../../models/user';
 import { hashPassword } from '../../utils/bcrypt';
 import { badRequest, created, ok, serverError } from '../../utils/helpers';
 import { createJWT } from '../../utils/jwt';
-import { HttpRequest, HttpResponse, IBusiness } from '../protocols';
+import { HttpRequest, HttpResponse, IBusiness } from '../../utils/protocols';
+import { IUser } from './model';
 import {
   CreateUserParams,
   ICreateUsersRepository,

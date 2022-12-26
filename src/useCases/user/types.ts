@@ -1,4 +1,4 @@
-import { IUser } from '../../models/user';
+import { IUser } from './model';
 
 export interface IGetUsersRepository {
   getUsers(): Promise<IUser[]>;

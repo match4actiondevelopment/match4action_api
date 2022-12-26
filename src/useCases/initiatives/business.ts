@@ -1,6 +1,6 @@
-import { IInitiative } from '../../models/initiative';
 import { badRequest, created, ok, serverError } from '../../utils/helpers';
-import { HttpRequest, HttpResponse, IBusiness } from '../protocols';
+import { HttpRequest, HttpResponse, IBusiness } from '../../utils/protocols';
+import { IInitiative } from './model';
 import {
   CreateInitiativeParams,
   ICreateInitiativeRepository,

@@ -1,6 +1,6 @@
-import { IGoal } from '../../models/goals';
 import { badRequest, created, ok, serverError } from '../../utils/helpers';
-import { HttpRequest, HttpResponse, IBusiness } from '../protocols';
+import { HttpRequest, HttpResponse, IBusiness } from '../../utils/protocols';
+import { IGoal } from './model';
 import {
   CreateGoalParams,
   ICreateGoalRepository,

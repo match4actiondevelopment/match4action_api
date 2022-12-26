@@ -6,7 +6,7 @@ import {
   GetUsersBusiness,
   SignInUserBusiness,
   UpdateUserBusiness,
-} from '../../business/users';
+} from './business';
 import {
   CreateUserRepository,
   DeleteUserRepository,
@@ -14,7 +14,7 @@ import {
   GetUsersRepository,
   SignInUserRepository,
   UpdateUserRepository,
-} from '../../repositories/users';
+} from './repository';
 
 /*
   repositories

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { Goal, IGoal } from './model';
 import {
   CreateGoalParams,
   ICreateGoalRepository,
@@ -6,8 +7,7 @@ import {
   IGetGoalsRepository,
   IUpdateGoalRepository,
   UpdateGoalParams,
-} from '../../business/goals/types';
-import { Goal, IGoal } from '../../models/goals';
+} from './types';
 
 export class GetGoalsRepository implements IGetGoalsRepository {
   async getGoals(): Promise<IGoal[]> {

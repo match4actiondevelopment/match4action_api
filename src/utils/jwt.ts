@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { IUser } from '../models/user';
+import { IUser } from '../useCases/user/model';
 
 export const createJWT = (user: IUser) => {
   const token = jwt.sign(

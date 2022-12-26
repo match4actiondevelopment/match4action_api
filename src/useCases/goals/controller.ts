@@ -1,11 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { CreateGoalBusiness, DeleteGoalBusiness, GetGoalsBusiness, UpdateGoalBusiness } from '../../business/goals';
-import {
-  CreateGoalRepository,
-  DeleteGoalRepository,
-  GetGoalsRepository,
-  UpdateGoalRepository,
-} from '../../repositories/goals';
+import { CreateGoalBusiness, DeleteGoalBusiness, GetGoalsBusiness, UpdateGoalBusiness } from './business';
+import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository, UpdateGoalRepository } from './repository';
 
 /*
   repositories

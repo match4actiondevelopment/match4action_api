@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
+import { IInitiative, Initiative } from './model';
 import {
   CreateInitiativeParams,
   ICreateInitiativeRepository,
   IDeleteInitiativeRepository,
   IGetInitiativeRepository,
   IGetInitiativesRepository,
-} from '../../business/initiatives/types';
-import { IInitiative, Initiative } from '../../models/initiative';
+} from './types';
 
 export class GetInitiativesRepository implements IGetInitiativesRepository {
   async getAll(): Promise<IInitiative[]> {

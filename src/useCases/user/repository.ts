@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import { comparePasswords } from '../../utils/bcrypt';
+import { IUser, User } from './model';
+
 import {
   CreateUserParams,
   ICreateUsersRepository,
@@ -9,9 +12,7 @@ import {
   IUpdateUserRepository,
   SignInUserParams,
   UpdateUserParams,
-} from '../../business/users/types';
-import { IUser, User } from '../../models/user';
-import { comparePasswords } from '../../utils/bcrypt';
+} from './types';
 
 export class GetUsersRepository implements IGetUsersRepository {
   async getUsers(): Promise<IUser[]> {

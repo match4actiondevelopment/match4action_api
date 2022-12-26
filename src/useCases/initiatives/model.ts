@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
-import { IGoal } from './goals';
-import { IUser } from './user';
+import { IGoal } from '../goals/model';
+import { IUser } from '../user/model';
 
 export interface IInitiative {
   image: string[];

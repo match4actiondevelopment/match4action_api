@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import { GoalsController } from './controllers/goals';
-import { InitiativesController } from './controllers/initiatives';
-import { UsersController } from './controllers/users';
+import { GoalsController } from './useCases/goals/controller';
+import { InitiativesController } from './useCases/initiatives/controller';
+import { UsersController } from './useCases/user/controller';
+
 import { protect } from './utils/authorization';
 
 const router = Router();

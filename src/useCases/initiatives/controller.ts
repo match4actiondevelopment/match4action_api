@@ -4,13 +4,13 @@ import {
   DeleteInitiativeBusiness,
   GetInitiativeBusiness,
   GetInitiativesBusiness,
-} from '../../business/initiatives';
+} from './business';
 import {
   CreateInitiativeRepository,
   DeleteInitiativeRepository,
   GetInitiativeRepository,
   GetInitiativesRepository,
-} from '../../repositories/initiatives';
+} from './repository';
 
 /*
   repositories
