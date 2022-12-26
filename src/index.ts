@@ -4,20 +4,31 @@ import mongoose from 'mongoose';
 import { CreateGoalController, DeleteGoalController, GetGoalsController } from './controllers/goals';
 import {
   CreateInitiativeController,
+  DeleteInitiativeController,
   GetInitiativeController,
   GetInitiativesController,
 } from './controllers/initiatives';
-import { DeleteInitiativeController } from './controllers/initiatives/delete';
-import { CreateUserController, DeleteUserController, GetUserController, GetUsersController } from './controllers/users';
+import {
+  CreateUserController,
+  DeleteUserController,
+  GetUserController,
+  GetUsersController,
+  UpdateUserController,
+} from './controllers/users';
 import { CreateGoalRepository, DeleteGoalRepository, GetGoalsRepository } from './repositories/goals';
-import { CreateInitiativeRepository, GetInitiativesRepository } from './repositories/initiatives';
-import { DeleteInitiativeRepository } from './repositories/initiatives/delete';
-import { GetInitiativeRepository } from './repositories/initiatives/getOne';
+import {
+  CreateInitiativeRepository,
+  DeleteInitiativeRepository,
+  GetInitiativeRepository,
+  GetInitiativesRepository,
+} from './repositories/initiatives';
+
 import {
   CreateUserRepository,
   DeleteUserRepository,
   GetUserRepository,
   GetUsersRepository,
+  UpdateUserRepository,
 } from './repositories/users';
 
 config();
@@ -68,6 +79,13 @@ mongoose
       const getUserRepository = new GetUserRepository();
       const getUserControllers = new GetUserController(getUserRepository);
       const { body, statusCode } = await getUserControllers.handle({ params: req.params });
+      res.status(statusCode).send(body);
+    });
+
+    app.put('/users/:id', async (req, res) => {
+      const updateUserRepository = new UpdateUserRepository();
+      const updateUserControllers = new UpdateUserController(updateUserRepository);
+      const { body, statusCode } = await updateUserControllers.handle({ body: req.body, params: req.params });
       res.status(statusCode).send(body);
     });
 
