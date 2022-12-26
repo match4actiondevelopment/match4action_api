@@ -25,3 +25,18 @@ export interface IGetUserRepository {
 export interface IDeleteUserRepository {
   delete(id: string): Promise<{ success: boolean }>;
 }
+
+export interface UpdateUserParams {
+  id: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  email: string;
+  location?: string;
+  bio?: string;
+  profileImage?: string;
+}
+
+export interface IUpdateUserRepository {
+  update(params: UpdateUserParams, id: string): Promise<IUser>;
+}
