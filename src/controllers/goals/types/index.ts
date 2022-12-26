@@ -16,3 +16,12 @@ export interface IGetGoalsRepository {
 export interface IDeleteGoalRepository {
   delete(id: string): Promise<{ success: boolean }>;
 }
+
+export interface UpdateGoalParams {
+  orderId: number;
+  name: string;
+}
+
+export interface IUpdateGoalRepository {
+  update(params: UpdateGoalParams, id: string): Promise<IGoal>;
+}
