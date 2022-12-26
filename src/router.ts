@@ -39,6 +39,7 @@ import {
   SignInUserRepository,
   UpdateUserRepository,
 } from './repositories/users';
+import { protect } from './utils/authorization';
 
 const router = Router();
 
@@ -61,7 +62,7 @@ const deleteInitiativeRepository = new DeleteInitiativeRepository();
 const signInUserRepository = new SignInUserRepository();
 
 /*
-  controller
+  controllers
 */
 const getUsersControllers = new GetUsersController(getUsersRepository);
 const createUserControllers = new CreateUserController(createUserRepository);
@@ -81,7 +82,7 @@ const signInUserControllers = new SignInUserController(signInUserRepository);
 /*
   users
 */
-router.get('/users', async (req, res) => {
+router.get('/users', protect, async (req, res) => {
   const { body, statusCode } = await getUsersControllers.handle();
   res.status(statusCode).send(body);
 });
@@ -96,17 +97,17 @@ router.post('/users', async (req, res) => {
   res.status(statusCode).send(body);
 });
 
-router.get('/users/:id', async (req, res) => {
+router.get('/users/:id', protect, async (req, res) => {
   const { body, statusCode } = await getUserControllers.handle({ params: req.params });
   res.status(statusCode).send(body);
 });
 
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', protect, async (req, res) => {
   const { body, statusCode } = await updateUserControllers.handle({ body: req.body, params: req.params });
   res.status(statusCode).send(body);
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', protect, async (req, res) => {
   const { body, statusCode } = await deleteUserControllers.handle({ params: req.params });
   res.status(statusCode).send(body);
 });
@@ -119,17 +120,17 @@ router.get('/goals', async (req, res) => {
   res.status(statusCode).send(body);
 });
 
-router.post('/goals', async (req, res) => {
+router.post('/goals', protect, async (req, res) => {
   const { body, statusCode } = await createGoalControllers.handle({ body: req.body });
   res.status(statusCode).send(body);
 });
 
-router.put('/goals/:id', async (req, res) => {
+router.put('/goals/:id', protect, async (req, res) => {
   const { body, statusCode } = await updateGoalController.handle({ body: req.body, params: req.params });
   res.status(statusCode).send(body);
 });
 
-router.delete('/goals/:id', async (req, res) => {
+router.delete('/goals/:id', protect, async (req, res) => {
   const { body, statusCode } = await deleteGoalController.handle({ params: req.params });
   res.status(statusCode).send(body);
 });
@@ -142,7 +143,7 @@ router.get('/initiatives', async (req, res) => {
   res.status(statusCode).send(body);
 });
 
-router.post('/initiatives', async (req, res) => {
+router.post('/initiatives', protect, async (req, res) => {
   const { body, statusCode } = await createInitiativeControllers.handle({ body: req.body });
   res.status(statusCode).send(body);
 });
@@ -152,7 +153,7 @@ router.get('/initiatives/:id', async (req, res) => {
   res.status(statusCode).send(body);
 });
 
-router.delete('/initiatives/:id', async (req, res) => {
+router.delete('/initiatives/:id', protect, async (req, res) => {
   const { body, statusCode } = await deleteInitiativeControllers.handle({ params: req.params });
   res.status(statusCode).send(body);
 });
