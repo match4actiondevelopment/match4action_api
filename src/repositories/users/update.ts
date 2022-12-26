@@ -9,7 +9,7 @@ export class UpdateUserRepository implements IUpdateUserRepository {
       throw new Error('User not found.');
     }
 
-    const newUser = await User.findByIdAndUpdate(id, params, { upsert: true });
+    const newUser = await User.findByIdAndUpdate(id, params, { upsert: true, returnOriginal: false });
 
     if (!newUser) {
       throw new Error('User not updated.');
