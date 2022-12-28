@@ -5,18 +5,20 @@ import session from 'express-session';
 import mongoose from 'mongoose';
 import morgan from 'morgan';
 import passport from 'passport';
-import errorHandler from './middleware/error';
-import router from './routes';
+import { errorHandler } from './middlewares/errorHandler';
+import { authRouter } from './routes/auth';
+import { usersRouter } from './routes/users';
 
 config();
 
-const url = process.env.MONGODB_URL as string;
+const url = process.env.MONGODB_URL ?? '';
 const username = process.env.MONGODB_USERNAME;
 const password = process.env.MONGODB_PASSWORD;
-const port = process.env.PORT || 3003;
+const port = process.env.PORT ?? 3003;
+const sessionSecret = process.env.SESSION_SECRET ?? 'secretSession';
 
-// passport config
-import passportStrategy from './config/passport';
+// Passport config
+import { passportStrategy } from './config/passport';
 
 passportStrategy(passport);
 
@@ -27,7 +29,7 @@ app.use(
   cors({
     origin: 'http://localhost:3000',
     methods: 'GET,POST,PUT,DELETE',
-    credentials: true, // IMPORTANT to set to true
+    credentials: true,
   })
 );
 
@@ -62,10 +64,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(
   session({
     name: 'session',
-    secret: 'secretcat',
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: true,
-    // cookie: { secure: true },
+    cookie: { secure: false },
   })
 );
 
@@ -73,10 +75,33 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.use('/', router);
+passport.serializeUser((user: any, cb) => {
+  process.nextTick(() => {
+    return cb(null, {
+      id: user._id,
+      username: user.username,
+      picture: user.picture,
+    });
+  });
+});
 
-// Error handling middleware
+passport.deserializeUser((user: any, cb) => {
+  process.nextTick(() => {
+    return cb(null, user);
+  });
+});
+
+// Routes
+app.use('/auth', authRouter);
+app.use('/users', usersRouter);
+
+// unknown Routes
+app.all('*', (req, res, next) => {
+  const err = new Error(`Route ${req.originalUrl} not found`) as any;
+  err.statusCode = 404;
+  next(err);
+});
+
 app.use(errorHandler);
 
 app.listen(port, () => {
