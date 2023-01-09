@@ -1,53 +1,70 @@
 import { model, Schema } from 'mongoose';
 
+export enum UserRole {
+  'volunteer',
+  'admin',
+  'organization',
+}
+
 export interface UserInterface {
   name: string;
   password?: string;
   email: string;
-  location?: string;
+  image?: string;
+  emailVerified: boolean;
+  role?: UserRole;
+  birthDate?: Date;
   bio?: string;
-  photo?: string;
-  role: string;
-  provider?: string;
-  googleId?: string;
+  location: {
+    city: string;
+    country: string;
+  };
+  questions: Record<string, any>;
 }
 
 export const User = model(
   'User',
   new Schema<UserInterface>(
     {
-      email: {
-        type: String,
-        minLength: 7,
-        lowercase: true,
-        unique: true,
-      },
       name: {
         type: String,
         required: true,
       },
+      email: {
+        type: String,
+        required: true,
+        trim: true,
+        unique: true,
+      },
       password: {
         type: String,
+      },
+      role: {
+        type: String,
+        enum: UserRole,
+        default: 'volunteer',
+      },
+      image: {
+        type: String,
+      },
+      birthDate: {
+        type: Date,
       },
       bio: {
         type: String,
       },
-      photo: {
-        type: String,
+      location: {
+        country: {
+          type: String,
+        },
+        city: {
+          type: String,
+        },
       },
-      googleId: {
-        type: String,
-        unique: true,
-      },
-      provider: {
-        type: String,
-        enum: ['google', 'none'],
-        default: 'none',
-      },
-      role: {
-        type: String,
-        enum: ['user', 'admin', 'super_admin'],
-        default: 'user',
+      questions: {},
+      emailVerified: {
+        type: Boolean,
+        default: null,
       },
     },
     {
