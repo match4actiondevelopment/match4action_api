@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { UserController } from '../controllers/user';
+import { AuthController } from '../controllers/auth';
 
 const router: Router = Router();
 
-const users = new UserController();
+const auth = new AuthController();
 
-router.post('/register', users.signUp);
-router.post('/login', users.signIn);
-router.post('/refreshToken', users.refreshToken);
+router.post('/register', auth.signUp);
+router.post('/login', auth.signIn);
+router.post('/refreshToken', auth.refreshToken);
 
 export { router as authRouter };
