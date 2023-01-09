@@ -19,7 +19,7 @@ export const generateTokens = async (user: GenerateTokensInterface) => {
 
     if (userToken) await userToken.remove();
 
-    await new UserToken({ userId: user._id, refresh_token }).save();
+    await new UserToken({ userId: user._id, token: refresh_token }).save();
     return Promise.resolve({ access_token, refresh_token });
   } catch (err) {
     return Promise.reject(err);

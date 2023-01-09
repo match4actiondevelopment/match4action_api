@@ -4,7 +4,7 @@ import { REFRESH_TOKEN_PRIVATE_KEY } from './constants';
 
 export const verifyRefreshToken = (refreshToken: string) => {
   return new Promise((resolve, reject) => {
-    UserToken.findOne({ access_token: refreshToken }, (err: any, doc: any) => {
+    UserToken.findOne({ token: refreshToken }, (err: any, doc: any) => {
       if (!doc) return reject({ error: true, message: 'Invalid refresh token.' });
 
       jwt.verify(refreshToken, REFRESH_TOKEN_PRIVATE_KEY, (err, tokenDetails) => {
