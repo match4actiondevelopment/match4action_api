@@ -1,15 +1,9 @@
 import jwt from 'jsonwebtoken';
-import { UserRole } from '../models/User';
 import { UserToken } from '../models/UserToken';
 import { ACCESS_TOKEN_PRIVATE_KEY, REFRESH_TOKEN_PRIVATE_KEY } from './constants';
+import { UserJWTPayload } from './verifyRefreshToken';
 
-export interface GenerateTokensInterface {
-  _id: string;
-  email: string;
-  role: UserRole;
-}
-
-export const generateTokens = async (user: GenerateTokensInterface) => {
+export const generateTokens = async (user: Pick<UserJWTPayload, '_id' | 'email' | 'role'>) => {
   try {
     const payload = { _id: user._id, role: user.role, email: user.email };
     const access_token = jwt.sign(payload, ACCESS_TOKEN_PRIVATE_KEY, { expiresIn: '14m' });
