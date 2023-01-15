@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
+import jwt, { JsonWebTokenError, NotBeforeError, TokenExpiredError } from 'jsonwebtoken';
 import { UserRole } from '../models/User';
-import { verifyRefreshToken, VerifyRefreshTokenSuccessResponse } from '../utils/verifyRefreshToken';
+import { ACCESS_TOKEN_PRIVATE_KEY } from '../utils/constants';
+import { RefreshTokenSuccessResponse } from '../utils/verifyRefreshToken';
 
 export const authGuard = async (req: Request, res: Response, next: NextFunction) => {
   const bearer = req.headers.authorization;
@@ -16,7 +18,33 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
   }
 
   try {
-    const decoded = (await verifyRefreshToken(token)) as VerifyRefreshTokenSuccessResponse;
+    const decoded = jwt.verify(token, ACCESS_TOKEN_PRIVATE_KEY, (err, tokenDetails) => {
+      if (err instanceof TokenExpiredError) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized! Access Token was expired!',
+        });
+      }
+      if (err instanceof NotBeforeError) {
+        return res.status(401).json({
+          success: false,
+          message: 'Jwt not active,',
+        });
+      }
+      if (err instanceof JsonWebTokenError) {
+        return res.status(401).json({
+          success: false,
+          message: 'Jwt malformed.',
+        });
+      }
+
+      if (tokenDetails)
+        return {
+          tokenDetails,
+          success: true,
+          message: 'Valid refresh token.',
+        };
+    }) as unknown as RefreshTokenSuccessResponse;
 
     if (decoded.success) {
       req.user = decoded.tokenDetails;
@@ -25,6 +53,7 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
     next();
   } catch (e) {
     console.error(e);
+
     return res.status(401).json({
       success: false,
       message: 'Not authorized.',

@@ -11,7 +11,7 @@ export interface UserInterface {
   password?: string;
   email: string;
   image?: string;
-  emailVerified: boolean;
+  termsAndConditions: boolean;
   role?: UserRole;
   birthDate?: Date;
   bio?: string;
@@ -19,7 +19,8 @@ export interface UserInterface {
     city: string;
     country: string;
   };
-  questions: Record<string, any>;
+  provider?: string;
+  answers: Record<string, any>;
 }
 
 export const User = model(
@@ -53,6 +54,9 @@ export const User = model(
       bio: {
         type: String,
       },
+      provider: {
+        type: String,
+      },
       location: {
         country: {
           type: String,
@@ -61,10 +65,10 @@ export const User = model(
           type: String,
         },
       },
-      questions: {},
-      emailVerified: {
+      answers: {},
+      termsAndConditions: {
         type: Boolean,
-        default: null,
+        default: false,
       },
     },
     {

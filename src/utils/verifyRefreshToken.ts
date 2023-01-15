@@ -11,7 +11,7 @@ export interface UserJWTPayload {
   exp: number;
 }
 
-export interface VerifyRefreshTokenSuccessResponse {
+export interface RefreshTokenSuccessResponse {
   tokenDetails: UserJWTPayload;
   success: boolean;
   message: string;
