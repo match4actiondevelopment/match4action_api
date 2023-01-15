@@ -9,6 +9,12 @@ import { verifyRefreshToken } from '../utils/verifyRefreshToken';
 export class AuthController {
   async signUp(req: Request, res: Response): Promise<void> {
     try {
+      if (!req?.body?.termsAndConditions) {
+        res
+          .status(404)
+          .json({ success: false, message: 'Error creating new user. The user must agree with terms and conditions.' });
+      }
+
       const user = await User.findOne({ email: req.body.email });
 
       if (user) {
@@ -20,21 +26,15 @@ export class AuthController {
       const newUser = new User({
         name: req?.body?.name,
         email: req?.body?.email,
+        termsAndConditions: req?.body?.termsAndConditions,
         role: req?.body?.role ?? 'volunteer',
         password: newPassword,
-        location: {
-          country: req?.body?.country,
-          city: req?.body?.city,
-        },
-        birthDate: req?.body?.birthDate,
-        questions: {},
-        bio: '',
-        image: '',
+        provider: req?.body?.provider ?? 'credentials',
       });
 
       const addedUser = await newUser.save();
 
-      const createdUser = await User.findById(addedUser._id).select('-password');
+      const createdUser = await User.findById(addedUser._id);
 
       if (!createdUser) {
         res.status(404).json({ success: false, message: 'Error creating new user.' });
@@ -45,6 +45,10 @@ export class AuthController {
         email: createdUser?.email!,
         role: createdUser?.role!,
       });
+
+      if (createdUser) {
+        createdUser.password = undefined;
+      }
 
       res.status(201).json({
         success: true,
@@ -106,7 +110,7 @@ export class AuthController {
         role: refreshTokenResponse.role,
       };
 
-      const access_token = jwt.sign(payload, ACCESS_TOKEN_PRIVATE_KEY, { expiresIn: '14m' });
+      const access_token = jwt.sign(payload, ACCESS_TOKEN_PRIVATE_KEY, { expiresIn: '5m' });
 
       res.status(200).json({
         success: true,

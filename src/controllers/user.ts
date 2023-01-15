@@ -75,7 +75,7 @@ export class UserController {
       updateUser.location = req?.body?.location ?? user?.location;
       updateUser.role = req?.body?.role ?? user?.role;
       updateUser.birthDate = req?.body?.birthDate ?? user?.birthDate;
-      updateUser.questions = req?.body?.questions ?? user?.questions;
+      updateUser.answers = req?.body?.answers ?? user?.answers;
 
       const newUser = await User.findByIdAndUpdate(req.params.id, updateUser, { upsert: true, returnOriginal: false });
 
