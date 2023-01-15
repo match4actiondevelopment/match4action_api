@@ -6,7 +6,7 @@ import { UserJWTPayload } from './verifyRefreshToken';
 export const generateTokens = async (user: Pick<UserJWTPayload, '_id' | 'email' | 'role'>) => {
   try {
     const payload = { _id: user._id, role: user.role, email: user.email };
-    const access_token = jwt.sign(payload, ACCESS_TOKEN_PRIVATE_KEY, { expiresIn: '14m' });
+    const access_token = jwt.sign(payload, ACCESS_TOKEN_PRIVATE_KEY, { expiresIn: '5m' });
     const refresh_token = jwt.sign(payload, REFRESH_TOKEN_PRIVATE_KEY, { expiresIn: '30d' });
 
     const userToken = await UserToken.findOne({ userId: user._id });
