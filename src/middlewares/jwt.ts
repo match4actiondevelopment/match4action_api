@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import jwt, { JsonWebTokenError, NotBeforeError, TokenExpiredError } from 'jsonwebtoken';
 import { UserRole } from '../models/User';
 import { ACCESS_TOKEN_PRIVATE_KEY } from '../utils/constants';
-import { RefreshTokenSuccessResponse } from '../utils/verifyRefreshToken';
+import { RefreshTokenSuccessResponse } from '../utils/types';
 
 export const authGuard = async (req: Request, res: Response, next: NextFunction) => {
   const bearer = req.headers.authorization;
@@ -18,7 +18,7 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
   }
 
   try {
-    const decoded = jwt.verify(token, ACCESS_TOKEN_PRIVATE_KEY, (err, tokenDetails) => {
+    const decoded = jwt.verify(token, ACCESS_TOKEN_PRIVATE_KEY, (err, tokenDetails: any) => {
       if (err instanceof TokenExpiredError) {
         return res.status(401).json({
           success: false,

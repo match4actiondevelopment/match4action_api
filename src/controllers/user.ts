@@ -1,13 +1,15 @@
 import { Request, Response } from 'express';
 import mongoose, { isValidObjectId } from 'mongoose';
 import { User, UserInterface } from '../models/User';
+import { ACCESS_TOKEN_PRIVATE_TIME } from '../utils/constants';
 
 export class UserController {
   async getAll(req: Request, res: Response): Promise<UserInterface[] | any> {
     try {
       const users = await User.find().select('-password');
+      const expiration = +ACCESS_TOKEN_PRIVATE_TIME * 60;
 
-      res.status(200).json({ data: users });
+      res.status(200).json({ data: users, expiration });
     } catch (error) {
       res.status(404);
     }
@@ -40,14 +42,15 @@ export class UserController {
       }
 
       const userLogged = req.user as any;
-      const user = await User.findById(req.body.id);
+
+      const user = await User.findById(req.user._id);
 
       if (!user) {
         res.status(200).json({ success: false, message: 'User not found!' });
       }
 
-      if (user && userLogged?.id === user?._id.toString()) {
-        res.status(200).json({ success: true, data: user });
+      if (user && userLogged?._id === user?._id.toString()) {
+        res.status(200).json({ success: true, data: user, exp: req.user.exp });
       }
     } catch (error) {
       res.status(404);
@@ -63,19 +66,19 @@ export class UserController {
         res.status(404).json({ success: false, message: 'User not found.' });
       }
 
-      if (userLogged?.id !== user?._id.toString()) {
+      if (userLogged?._id !== user?._id.toString()) {
         res.status(401).json({ success: false, message: 'Unauthorized! Access Token invalid!' });
       }
 
       const updateUser = new User(user);
 
       updateUser.bio = req?.body?.bio ?? user?.bio;
-      updateUser.password = req?.body?.password ?? user?.password;
-      updateUser.image = req?.body?.image ?? user?.image;
+      // updateUser.password = req?.body?.password ?? user?.password;
+      // updateUser.image = req?.body?.image ?? user?.image;
       updateUser.location = req?.body?.location ?? user?.location;
       updateUser.role = req?.body?.role ?? user?.role;
       updateUser.birthDate = req?.body?.birthDate ?? user?.birthDate;
-      updateUser.answers = req?.body?.answers ?? user?.answers;
+      // updateUser.answers = req?.body?.answers ?? user?.answers;
 
       const newUser = await User.findByIdAndUpdate(req.params.id, updateUser, { upsert: true, returnOriginal: false });
 
