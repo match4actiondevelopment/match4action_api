@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import morgan from 'morgan';
 import { errorHandler } from './middlewares/errorHandler';
 import { authRouter } from './routes/auth';
+import { sustainableDevelopmentGoalsRouter } from './routes/sustainableDevelopmentGoals';
 import { usersRouter } from './routes/users';
 
 config();
@@ -47,6 +48,7 @@ app.use(express.urlencoded({ extended: false }));
 // Routes
 app.use('/auth', authRouter);
 app.use('/users', usersRouter);
+app.use('/sustainableDevelopmentGoals', sustainableDevelopmentGoalsRouter);
 
 // unknown Routes
 app.all('*', (req, res, next) => {

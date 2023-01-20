@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
 import mongoose, { isValidObjectId } from 'mongoose';
 import { User, UserInterface } from '../models/User';
-import { ACCESS_TOKEN_PRIVATE_TIME } from '../utils/constants';
 
 export class UserController {
   async getAll(req: Request, res: Response): Promise<UserInterface[] | any> {
     try {
       const users = await User.find().select('-password');
-      const expiration = +ACCESS_TOKEN_PRIVATE_TIME * 60;
 
-      res.status(200).json({ data: users, expiration });
+      res.status(200).json({ data: users });
     } catch (error) {
       res.status(404);
     }
