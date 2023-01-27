@@ -11,18 +11,20 @@ import {
 } from '../utils/constants';
 
 export class AuthController {
-  async signUp(req: Request, res: Response): Promise<void> {
+  async signUp(req: Request, res: Response): Promise<any> {
     try {
       if (!req?.body?.termsAndConditions) {
         res
           .status(404)
           .json({ success: false, message: 'Error creating new user. The user must agree with terms and conditions.' });
+        return;
       }
 
       const user = await User.findOne({ email: req.body.email });
 
       if (user) {
         res.status(404).json({ success: false, message: 'Invalid email.' });
+        return;
       }
 
       const newPassword = await hashPassword(req?.body?.password);
@@ -47,9 +49,9 @@ export class AuthController {
 
       const access_token = jwt.sign(
         {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
+          _id: createdUser!._id,
+          role: createdUser!.role,
+          email: createdUser!.email,
         },
         ACCESS_TOKEN_PRIVATE_KEY,
         { expiresIn: +ACCESS_TOKEN_PRIVATE_TIME }
@@ -57,9 +59,9 @@ export class AuthController {
 
       const refresh_token = jwt.sign(
         {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
+          _id: createdUser!._id,
+          role: createdUser!.role,
+          email: createdUser!.email,
         },
         REFRESH_TOKEN_PRIVATE_KEY,
         { expiresIn: REFRESH_TOKEN_PRIVATE_TIME }
@@ -67,7 +69,7 @@ export class AuthController {
 
       const userToken = new UserToken({
         token: refresh_token,
-        userId: user?._id,
+        userId: createdUser?._id,
       });
 
       const addedUserToken = await userToken.save();
