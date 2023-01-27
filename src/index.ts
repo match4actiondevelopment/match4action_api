@@ -46,9 +46,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Routes
-app.use('/auth/register', (req, res) => {
-  res.status(200).json({ success: false, data: req.body });
-});
+app.use('/auth', authRouter);
 app.use('/users', usersRouter);
 app.use('/sustainableDevelopmentGoals', sustainableDevelopmentGoalsRouter);
 
