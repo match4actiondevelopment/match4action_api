@@ -8,7 +8,7 @@ import {
   ACCESS_TOKEN_PRIVATE_KEY,
   ACCESS_TOKEN_PRIVATE_TIME,
   REFRESH_TOKEN_PRIVATE_KEY,
-  REFRESH_TOKEN_PRIVATE_TIME
+  REFRESH_TOKEN_PRIVATE_TIME,
 } from '../utils/constants';
 
 const router: Router = Router();
@@ -27,7 +27,7 @@ router.post('/register', async (req, res) => {
 
     const user = await User.findOne({ email: req.body.email });
 
-    if (!user) {
+    if (user) {
       return res.status(404).json({ success: false, message: 'Invalid email.' });
     }
 
