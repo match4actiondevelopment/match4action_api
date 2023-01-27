@@ -13,14 +13,14 @@ config();
 const url = process.env.MONGODB_URL ?? '';
 const username = process.env.MONGODB_USERNAME;
 const password = process.env.MONGODB_PASSWORD;
-const port = process.env.PORT ?? 3003;
+const port = process.env.PORT;
 
 const app = express();
 
 app.use(morgan('dev'));
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'https://match4action-api.onrender.com'],
     methods: 'GET,POST,PUT,DELETE,PATCH',
     credentials: true,
   })
@@ -46,7 +46,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Routes
-app.use('/auth', authRouter);
+app.use('/auth/register', (req, res) => {
+  res.status(200).json({ success: false, data: req.body });
+});
 app.use('/users', usersRouter);
 app.use('/sustainableDevelopmentGoals', sustainableDevelopmentGoalsRouter);
 
