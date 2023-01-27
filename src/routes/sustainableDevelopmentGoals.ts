@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SustainableDevelopmentGoalsController } from '../controllers/SustainableDevelopmentGoals';
+import { SustainableDevelopmentGoalsController } from '../controllers/sustainableDevelopmentGoals';
 
 const router: Router = Router();
 
