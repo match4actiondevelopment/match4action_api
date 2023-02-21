@@ -1,4 +1,6 @@
-import { model, Schema } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+
+const Schema = mongoose.Schema;
 
 export enum UserRole {
   'volunteer',
@@ -6,73 +8,75 @@ export enum UserRole {
   'organization',
 }
 
-export interface UserInterface {
+export type UserDocument = Document & {
   name: string;
-  password?: string;
   email: string;
   image?: string;
-  termsAndConditions: boolean;
-  role?: UserRole;
   birthDate?: Date;
-  bio?: string;
-  location: {
+  password?: string;
+  provider?: {
+    name: string;
+    id: string;
+  };
+  location?: {
     city: string;
     country: string;
   };
-  provider?: string;
+  bio?: string;
+  role?: UserRole;
+  termsAndConditions: boolean;
   answers: Record<string, any>;
-}
+};
 
-export const User = model(
-  'User',
-  new Schema<UserInterface>(
-    {
+const userSchema = new Schema<UserDocument>(
+  {
+    name: { type: String, required: true },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+    },
+    image: {
+      type: String,
+    },
+    birthDate: {
+      type: Date,
+    },
+    role: {
+      type: String,
+      enum: UserRole,
+      default: 'volunteer',
+    },
+    bio: {
+      type: String,
+    },
+    provider: {
+      id: {
+        type: String,
+      },
       name: {
         type: String,
         required: true,
       },
-      email: {
-        type: String,
-        required: true,
-        trim: true,
-        unique: true,
-      },
-      password: {
+    },
+    location: {
+      country: {
         type: String,
       },
-      role: {
+      city: {
         type: String,
-        enum: UserRole,
-        default: 'volunteer',
-      },
-      image: {
-        type: String,
-      },
-      birthDate: {
-        type: Date,
-      },
-      bio: {
-        type: String,
-      },
-      provider: {
-        type: String,
-      },
-      location: {
-        country: {
-          type: String,
-        },
-        city: {
-          type: String,
-        },
-      },
-      answers: {},
-      termsAndConditions: {
-        type: Boolean,
-        default: false,
       },
     },
-    {
-      timestamps: true,
-    }
-  )
+    answers: {},
+    termsAndConditions: { type: Boolean },
+  },
+  {
+    timestamps: true,
+  }
 );
+
+export const User = mongoose.model<UserDocument>('User', userSchema);

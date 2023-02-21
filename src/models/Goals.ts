@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
 
-export enum SustainableDevelopmentGoalsEnum {
+export enum GoalsEnum {
   'GOAL_1' = 'No Poverty',
   'GOAL_2' = 'Zero Hunger',
   'GOAL_3' = 'Good Health and Well-being',
@@ -20,18 +20,18 @@ export enum SustainableDevelopmentGoalsEnum {
   'GOAL_17' = 'Partnerships to achieve the Goal',
 }
 
-export interface ISustainableDevelopmentGoal {
+export interface IGoal {
   order: number;
   name: string;
   image?: string;
 }
 
-export const SustainableDevelopmentGoal = model(
-  'SustainableDevelopmentGoal',
-  new Schema<ISustainableDevelopmentGoal>({
+export const Goal = model(
+  'Goal',
+  new Schema<IGoal>({
     name: {
       type: String,
-      enum: Object.values(SustainableDevelopmentGoalsEnum),
+      enum: Object.values(GoalsEnum),
       required: true,
       unique: true,
     },

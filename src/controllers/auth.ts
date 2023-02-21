@@ -1,98 +1,48 @@
 import { Request, Response } from 'express';
 import jwt, { JsonWebTokenError, NotBeforeError, TokenExpiredError } from 'jsonwebtoken';
-import { comparePasswords, hashPassword } from '../middlewares/bcrypt';
-import { User } from '../models/User';
+import { User, UserDocument } from '../models/User';
 import { UserToken } from '../models/UserToken';
-import {
-  ACCESS_TOKEN_PRIVATE_KEY,
-  ACCESS_TOKEN_PRIVATE_TIME,
-  REFRESH_TOKEN_PRIVATE_KEY,
-  REFRESH_TOKEN_PRIVATE_TIME,
-} from '../utils/constants';
+import { comparePasswords } from '../utils/bcrypt';
+import { signJwtAccessToken, signJwtRefreshToken } from '../utils/jwt';
 
 export class AuthController {
-  async signUp(req: Request, res: Response): Promise<any> {
+  async signUp(user: UserDocument): Promise<any> {
     try {
-      if (!req?.body?.termsAndConditions) {
-        res
-          .status(404)
-          .json({ success: false, message: 'Error creating new user. The user must agree with terms and conditions.' });
-        return;
-      }
+      const access_token = signJwtAccessToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
+      })
 
-      const user = await User.findOne({ email: req.body.email });
-
-      if (user) {
-        res.status(404).json({ success: false, message: 'Invalid email.' });
-        return;
-      }
-
-      const newPassword = await hashPassword(req?.body?.password);
-
-      const newUser = new User({
-        name: req?.body?.name,
-        email: req?.body?.email,
-        termsAndConditions: req?.body?.termsAndConditions,
-        role: req?.body?.role ?? 'volunteer',
-        password: newPassword,
-        provider: req?.body?.provider ?? 'credentials',
+      const refresh_token = signJwtRefreshToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
       });
-
-      const addedUser = await newUser.save();
-
-      const createdUser = await User.findById(addedUser._id);
-
-      if (!createdUser) {
-        res.status(404).json({ success: false, message: 'Error creating new user.' });
-        return;
-      }
-
-      const access_token = jwt.sign(
-        {
-          _id: createdUser!._id,
-          role: createdUser!.role,
-          email: createdUser!.email,
-        },
-        ACCESS_TOKEN_PRIVATE_KEY,
-        { expiresIn: +ACCESS_TOKEN_PRIVATE_TIME }
-      );
-
-      const refresh_token = jwt.sign(
-        {
-          _id: createdUser!._id,
-          role: createdUser!.role,
-          email: createdUser!.email,
-        },
-        REFRESH_TOKEN_PRIVATE_KEY,
-        { expiresIn: REFRESH_TOKEN_PRIVATE_TIME }
-      );
 
       const userToken = new UserToken({
         token: refresh_token,
-        userId: createdUser?._id,
+        userId: user?._id,
       });
 
       const addedUserToken = await userToken.save();
 
       if (!addedUserToken) {
-        res.status(404).json({ success: false, message: 'Error creating refresh token.' });
-        return;
+        return { success: false, message: 'Error creating refresh token.' }
       }
 
-      if (createdUser) {
-        createdUser.password = undefined;
-      }
+      user.password = undefined;
 
-      res.status(201).json({
+      return {
         success: true,
-        user: {
-          ...createdUser?.toObject(),
+        data: {
           access_token,
           refresh_token,
+          user: user,
         },
-      });
+      }
     } catch (error) {
-      res.status(404);
+      throw new Error(`Error: ${error}`);
     }
   }
 
@@ -102,33 +52,27 @@ export class AuthController {
 
       if (!user) {
         res.status(404).json({ success: false, message: 'Invalid email or password.' });
+        return;
       }
 
-      const newPassword = await comparePasswords(req.body.password, user?.password!);
+      const comparedPassword = await comparePasswords(req.body.password, user?.password!);
 
-      if (!newPassword) {
+      if (!comparedPassword) {
         res.status(404).json({ success: false, message: 'Invalid email or password.' });
+        return;
       }
 
-      const access_token = jwt.sign(
-        {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
-        },
-        ACCESS_TOKEN_PRIVATE_KEY,
-        { expiresIn: +ACCESS_TOKEN_PRIVATE_TIME }
-      );
+      const access_token = signJwtAccessToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
+      })
 
-      const refresh_token = jwt.sign(
-        {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
-        },
-        REFRESH_TOKEN_PRIVATE_KEY,
-        { expiresIn: REFRESH_TOKEN_PRIVATE_TIME }
-      );
+      const refresh_token = signJwtRefreshToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
+      });
 
       const userToken = new UserToken({
         token: refresh_token,
@@ -145,9 +89,9 @@ export class AuthController {
       res.status(200).json({
         success: true,
         data: {
-          ...user?.toObject(),
           access_token,
           refresh_token,
+          user
         },
       });
     } catch (error) {
@@ -169,39 +113,45 @@ export class AuthController {
         return;
       }
 
-      const result = jwt.verify(refreshToken?.token, REFRESH_TOKEN_PRIVATE_KEY, (err, tokenDetails) => {
-        if (err instanceof TokenExpiredError) {
-          return res.status(401).json({
-            success: false,
-            message: 'Unauthorized! Access Token was expired!',
-          });
-        }
-        if (err instanceof NotBeforeError) {
-          return res.status(401).json({
-            success: false,
-            message: 'Jwt not active,',
-          });
-        }
-        if (err instanceof JsonWebTokenError) {
-          return res.status(401).json({
-            success: false,
-            message: 'Jwt malformed.',
-          });
-        }
+      const result = jwt.verify(
+        refreshToken?.token,
+        process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
+        (err, tokenDetails) => {
 
-        if (tokenDetails)
-          return {
-            tokenDetails,
-            success: true,
-            message: 'Valid refresh token.',
-          };
-      }) as unknown as any;
+          if (err instanceof TokenExpiredError) {
+            return res.status(401).json({
+              success: false,
+              message: 'Unauthorized! Access Token was expired!',
+            });
+          }
+          if (err instanceof NotBeforeError) {
+            return res.status(401).json({
+              success: false,
+              message: 'Jwt not active,',
+            });
+          }
+          if (err instanceof JsonWebTokenError) {
+            return res.status(401).json({
+              success: false,
+              message: 'Jwt malformed.',
+            });
+          }
+
+          if (tokenDetails)
+            return {
+              tokenDetails,
+              success: true,
+              message: 'Valid refresh token.',
+            };
+        }
+      ) as unknown as any;
+
 
       if (!result?.success) {
-        UserToken.findByIdAndRemove(refreshToken?._id, { useFindAndModify: false }).exec();
+        await UserToken.findByIdAndRemove(refreshToken?._id, { useFindAndModify: false }).exec();
 
         res.status(403).json({
-          message: 'Refresh token was expired. Please make a new sign-in request',
+          message: 'Refresh token was expired. Please make a new sign-in request.',
           result,
         });
         return;
@@ -210,19 +160,15 @@ export class AuthController {
       const user = await User.findById(refreshToken?.userId);
 
       if (!user) {
-        res.status(404).json({ success: false, message: 'User not found' });
+        res.status(404).json({ success: false, message: 'User not found.' });
         return;
       }
 
-      const access_token = jwt.sign(
-        {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
-        },
-        ACCESS_TOKEN_PRIVATE_KEY,
-        { expiresIn: +ACCESS_TOKEN_PRIVATE_TIME }
-      );
+      const access_token = signJwtAccessToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
+      })
 
       res.status(200).json({
         success: true,
@@ -236,33 +182,29 @@ export class AuthController {
     }
   }
 
-  async googleSignIn(req: Request, res: Response): Promise<void> {
+  async googleSignIn(email?: string) {
     try {
-      const user = await User.findOne({ email: req?.body?.email });
-
-      if (!user) {
-        res.status(404).json({ success: false, message: 'Invalid email or password.' });
+      if (!email) {
+        throw new Error('Email must be provided.');
       }
 
-      const access_token = jwt.sign(
-        {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
-        },
-        ACCESS_TOKEN_PRIVATE_KEY,
-        { expiresIn: +ACCESS_TOKEN_PRIVATE_TIME }
-      );
+      const user = await User.findOne({ email });
 
-      const refresh_token = jwt.sign(
-        {
-          _id: user!._id,
-          role: user!.role,
-          email: user!.email,
-        },
-        REFRESH_TOKEN_PRIVATE_KEY,
-        { expiresIn: REFRESH_TOKEN_PRIVATE_TIME }
-      );
+      if (!user) {
+        throw new Error('Invalid email or password.');
+      }
+
+      const access_token = signJwtAccessToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
+      })
+
+      const refresh_token = signJwtRefreshToken({
+        _id: user._id!,
+        email: user.email!,
+        role: user.role!
+      });
 
       const userToken = new UserToken({
         token: refresh_token,
@@ -272,20 +214,20 @@ export class AuthController {
       const addedUserToken = await userToken.save();
 
       if (!addedUserToken) {
-        res.status(404).json({ success: false, message: 'Error creating refresh token.' });
-        return;
+        throw new Error('Error creating refresh token.');
       }
 
-      res.status(200).json({
+      return {
         success: true,
         data: {
-          ...user?.toObject(),
           access_token,
           refresh_token,
+          userId: user?._id,
         },
-      });
+      };
     } catch (error) {
-      res.status(404);
+      throw new Error(`Error: ${error}`);
     }
-  }
+  };
+
 }

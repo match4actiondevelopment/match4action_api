@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt, { JsonWebTokenError, NotBeforeError, TokenExpiredError } from 'jsonwebtoken';
-import { UserRole } from '../models/User';
-import { ACCESS_TOKEN_PRIVATE_KEY } from '../utils/constants';
-import { RefreshTokenSuccessResponse } from '../utils/types';
+import { UserDocument } from '../models/User';
+import { ACCESS_TOKEN_PRIVATE_KEY } from './secrets';
 
 export const authGuard = async (req: Request, res: Response, next: NextFunction) => {
   const bearer = req.headers.authorization;
@@ -19,6 +18,7 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
 
   try {
     const decoded = jwt.verify(token, ACCESS_TOKEN_PRIVATE_KEY, (err, tokenDetails: any) => {
+
       if (err instanceof TokenExpiredError) {
         return res.status(401).json({
           success: false,
@@ -44,10 +44,14 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
           success: true,
           message: 'Valid refresh token.',
         };
-    }) as unknown as RefreshTokenSuccessResponse;
+    }) as unknown as {
+      tokenDetails?: UserDocument
+      success: boolean,
+      message: string
+    }
 
-    if (decoded.success) {
-      req.user = decoded.tokenDetails;
+    if (decoded?.success) {
+      req.user = decoded?.tokenDetails;
     }
 
     next();
@@ -58,13 +62,5 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
       success: false,
       message: 'Not authorized.',
     });
-  }
-};
-
-export const adminGuard = (req: Request, res: Response, next: NextFunction) => {
-  if (req?.user && req?.user?.role !== UserRole.admin) {
-    res.status(401).json({ success: false, message: 'Unauthorized!' });
-  } else {
-    next();
   }
 };
