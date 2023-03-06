@@ -1,4 +1,4 @@
-import mongoose, { Document, ObjectId, Schema } from 'mongoose';
+import mongoose, { Document, ObjectId, Schema } from "mongoose";
 
 export type InitiativeDocument = Document & {
   eventItemFrame: string;
@@ -28,13 +28,13 @@ const initiativeSchema = new Schema<InitiativeDocument>(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     applicants: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
       },
     ],
     eventItemFrame: {
@@ -45,34 +45,39 @@ const initiativeSchema = new Schema<InitiativeDocument>(
     },
     initiativeName: {
       type: String,
+      required: true,
     },
-    whatMovesThisInitiative: {
-      type: String,
-    },
-    whichAreasAreCoveredByThisInitiative: {
-      type: String,
-    },
-    servicesNeeded: {
-      type: String,
-    },
+    whatMovesThisInitiative: [
+      {
+        type: String,
+      },
+    ],
+    whichAreasAreCoveredByThisInitiative: [
+      {
+        type: String,
+      },
+    ],
+    servicesNeeded: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     description: {
       type: String,
+      required: true,
     },
     startDate: {
       type: Date,
-      required: true,
     },
     endDate: {
       type: Date,
-      required: true,
     },
     startTime: {
       type: Date,
-      required: true,
     },
     endTime: {
       type: Date,
-      required: true,
     },
     postalCode: {
       type: String,
@@ -90,13 +95,13 @@ const initiativeSchema = new Schema<InitiativeDocument>(
     },
     image: [
       {
-        type: String,
+        type: String || null,
       },
     ],
     goals: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Goal',
+        ref: "Goal",
       },
     ],
   },
@@ -105,4 +110,7 @@ const initiativeSchema = new Schema<InitiativeDocument>(
   }
 );
 
-export const Initiative = mongoose.model<InitiativeDocument>('Initiative', initiativeSchema);
+export const Initiative = mongoose.model<InitiativeDocument>(
+  "Initiative",
+  initiativeSchema
+);
