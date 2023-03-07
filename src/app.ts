@@ -22,6 +22,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "https://match4action-web.vercel.app",
       "http://match4action-api.onrender.com",
       "https://match4action-api.onrender.com",
     ],
