@@ -6,19 +6,19 @@ import {
   getOne,
   remove,
   subscribe,
+  update,
 } from "../controllers/initiatives";
-import { verifyToken } from "../middleware/jwt";
-import { multerUpload } from "../utils/multer";
+import { isLogged } from "../middleware/jwt";
+import { multerUpload } from "../middleware/multer";
 
 const router: Router = Router();
 
-router.get("/user", verifyToken, getInitiativesByUser);
-router.patch("/subscribe/:id", verifyToken, subscribe);
-
+router.get("/user", isLogged, getInitiativesByUser);
+router.patch("/subscribe/:id", isLogged, subscribe);
 router.get("/", getAll);
-router.post("/", verifyToken, multerUpload.single("file"), create);
-
-router.get("/:id", verifyToken, getOne);
-router.delete("/:id", verifyToken, remove);
+router.post("/", isLogged, multerUpload.single("file"), create);
+router.delete("/:id", isLogged, remove);
+router.put("/:id", isLogged, multerUpload.single("file"), update);
+router.get("/:id", getOne);
 
 export { router as initiatives };

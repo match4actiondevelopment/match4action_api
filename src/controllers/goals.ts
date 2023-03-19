@@ -12,8 +12,8 @@ export const getAll = async (
     const goals = await Goal.find();
 
     return res.status(200).json({
-      success: true,
       data: goals,
+      success: true,
       message: "Goals list found.",
     });
   } catch (error) {
@@ -37,7 +37,7 @@ export const create = async (
       );
     }
 
-    const { _id } = await Goal.create(req.body);
+    const { _id } = await Goal.create(req?.body);
 
     const createdGoal = await Goal.findById(_id);
 
@@ -48,8 +48,8 @@ export const create = async (
     }
 
     return res.status(201).json({
-      success: true,
       data: createdGoal,
+      success: true,
       message: "Goal created successfully.",
     });
   } catch (error) {
@@ -105,8 +105,8 @@ export const update = async (
     }
 
     return res.status(200).json({
-      success: true,
       data: updatedGoal,
+      success: true,
       message: "Goal updated!",
     });
   } catch (error) {

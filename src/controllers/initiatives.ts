@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
+import { uploadBusiness } from "../business/upload";
 import { Initiative } from "../models/Initiatives";
 import { createError } from "../utils/createError";
 
@@ -90,18 +91,25 @@ export const create = async (
     startTime.setMinutes(startTimeMinutes);
 
     let image = null;
+
     if (req?.file) {
-      // image = await uploadController.create(req, res);
-      // if (!image?.success) {
-      //   throw new Error("Error: image not uploaded.");
-      // }
+      const uploadResponse = await uploadBusiness({
+        file: req?.file,
+        folderName: req?.body?.folderName,
+      });
+
+      if (!uploadResponse?.success) {
+        return next(createError(404, "Error uploading image."));
+      } else {
+        image = uploadResponse?.url;
+      }
     }
 
     const initiative = new Initiative({
       ...req.body,
       startTime,
       endTime,
-      // image: image?.data ?? null,
+      image: [image] ?? null,
       userId: req?.user?._id,
       whatMovesThisInitiative: JSON.parse(req.body.whatMovesThisInitiative),
       servicesNeeded: JSON.parse(req.body.servicesNeeded),
@@ -197,6 +205,97 @@ export const subscribe = async (
       data: updatedInitiative,
       success: true,
       message: "Initiative subscription successfully updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const update = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = new mongoose.Types.ObjectId(req?.params?.id);
+    const initiative = await Initiative.findById(id);
+
+    if (req?.user?._id !== initiative?.userId?.toString()) {
+      return next(createError(403, "You can update only your initiatives."));
+    }
+
+    const endTime = new Date();
+    const [endTimeHour, endTimeMinutes] = req?.body?.endTime?.split(":");
+    endTime.setHours(endTimeHour);
+    endTime.setMinutes(endTimeMinutes);
+
+    const startTime = new Date();
+    const [startTimeHour, startTimeMinutes] = req?.body?.startTime?.split(":");
+    startTime.setHours(startTimeHour);
+    startTime.setMinutes(startTimeMinutes);
+
+    let image = null;
+
+    if (req?.file) {
+      const uploadResponse = await uploadBusiness({
+        file: req?.file,
+        folderName: req?.body?.folderName,
+      });
+
+      if (!uploadResponse?.success) {
+        return next(createError(404, "Error uploading image."));
+      } else {
+        image = uploadResponse?.url;
+      }
+    }
+
+    const updateInitiative = new Initiative(initiative);
+
+    updateInitiative.endTime = endTime ?? initiative?.endTime;
+    updateInitiative.startTime = startTime ?? initiative?.startTime;
+    updateInitiative.goals = JSON.parse(req.body.goals) ?? initiative?.endTime;
+    updateInitiative.location =
+      JSON.parse(req.body.location) ?? initiative?.location;
+    updateInitiative.servicesNeeded =
+      JSON.parse(req.body.servicesNeeded) ?? initiative?.servicesNeeded;
+    updateInitiative.whatMovesThisInitiative =
+      JSON.parse(req.body.whatMovesThisInitiative) ??
+      initiative?.whatMovesThisInitiative;
+    updateInitiative.whichAreasAreCoveredByThisInitiative =
+      JSON.parse(req.body.whichAreasAreCoveredByThisInitiative) ??
+      initiative?.whichAreasAreCoveredByThisInitiative;
+    updateInitiative.image = ([image] as string[]) ?? initiative?.image;
+    updateInitiative.website = req.body.website ?? initiative?.website;
+    updateInitiative.applicants = initiative?.applicants ?? [];
+    updateInitiative.eventItemFrame =
+      req.body.eventItemFrame ?? initiative?.eventItemFrame;
+    updateInitiative.eventItemType =
+      req.body.eventItemType ?? initiative?.eventItemType;
+    updateInitiative.initiativeName =
+      req.body.initiativeName ?? initiative?.initiativeName;
+    updateInitiative.description =
+      req.body.description ?? initiative?.description;
+    updateInitiative.startDate = req.body.startDate ?? initiative?.startDate;
+    updateInitiative.endDate = req.body.endDate ?? initiative?.endDate;
+    updateInitiative.postalCode = req.body.postalCode ?? initiative?.postalCode;
+
+    const updatedInitiative = await Initiative.findByIdAndUpdate(
+      id,
+      updateInitiative,
+      {
+        upsert: true,
+        returnOriginal: false,
+      }
+    );
+
+    if (!updatedInitiative) {
+      return next(createError(404, "Initiative not updated."));
+    }
+
+    return res.status(200).send({
+      data: updatedInitiative,
+      success: true,
+      message: "Initiative successfully updated.",
     });
   } catch (error) {
     next(error);

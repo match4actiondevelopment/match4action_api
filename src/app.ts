@@ -6,10 +6,7 @@ import mongoose from "mongoose";
 import morgan from "morgan";
 import passport from "passport";
 import "./config/passport";
-import { auth } from "./routes/auth";
-import { goals } from "./routes/goals";
-import { initiatives } from "./routes/initiatives";
-import { users } from "./routes/user";
+import { auth, goals, initiatives, upload, users } from "./routes";
 import { ErrorWithStatus } from "./utils/createError";
 import { COOKIE_KEY, MONGO_URI, PORT } from "./utils/secrets";
 
@@ -52,6 +49,7 @@ app.use("/auth", auth);
 app.use("/users", users);
 app.use("/goals", goals);
 app.use("/initiatives", initiatives);
+app.use("/upload", upload);
 
 app.use(
   (err: ErrorWithStatus, req: Request, res: Response, next: NextFunction) => {
