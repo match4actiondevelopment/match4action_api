@@ -1,16 +1,24 @@
 import { Router } from "express";
-import { InitiativesController } from "../controllers/initiatives";
-import { authGuard } from "../utils/authGuard";
+import {
+  create,
+  getAll,
+  getInitiativesByUser,
+  getOne,
+  remove,
+  subscribe,
+} from "../controllers/initiatives";
+import { verifyToken } from "../middleware/jwt";
 import { multerUpload } from "../utils/multer";
 
 const router: Router = Router();
 
-const initiatives = new InitiativesController();
+router.get("/user", verifyToken, getInitiativesByUser);
+router.patch("/subscribe/:id", verifyToken, subscribe);
 
-router.get("/", initiatives.getAll);
-router.post("/", authGuard, multerUpload.single("file"), initiatives.create);
-router.get("/:id", authGuard, initiatives.getOne);
-router.delete("/:id", authGuard, initiatives.delete);
-router.patch("/:id", authGuard, initiatives.subscribe);
+router.get("/", getAll);
+router.post("/", verifyToken, multerUpload.single("file"), create);
 
-export { router as initiativesRouter };
+router.get("/:id", verifyToken, getOne);
+router.delete("/:id", verifyToken, remove);
+
+export { router as initiatives };
