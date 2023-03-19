@@ -1,16 +1,14 @@
-import { Router } from 'express';
-import { UserController } from '../controllers/user';
-import { authGuard } from '../utils/authGuard';
+import { Router } from "express";
+import { remove, getAll, getOne, profile, update } from "../controllers/user";
+import { verifyToken } from "../middleware/jwt";
 
 const router: Router = Router();
 
-const users = new UserController();
+router.get("/", getAll);
+router.post("/profile", verifyToken, profile);
+router.get("/:id", verifyToken, getOne);
+router.delete("/:id", verifyToken, remove);
+router.patch("/:id", verifyToken, update);
 
-router.get('/', users.getAll);
-router.post('/profile', authGuard, users.profile);
+export { router as users };
 
-// router.get('/:id', users.getOne);
-// router.delete('/:id',  users.delete);
-router.patch('/:id', authGuard, users.update);
-
-export { router as usersRouter };
