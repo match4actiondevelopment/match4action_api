@@ -27,7 +27,7 @@ export const getOne = async (
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return next(createError(403, "User not found."));
+      return next(createError(404, "User not found."));
     }
 
     return res.status(200).json({ success: true, message: "User found." });

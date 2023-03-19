@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { UploadController } from "../controllers/upload";
-import { authGuard } from "../utils/authGuard";
+import { verifyToken } from "../middleware/jwt";
 import { multerUpload } from "../utils/multer";
 
 const router: Router = Router();
 
 const uploadController = new UploadController();
 
-router.post("/", authGuard, multerUpload.single("file"), async (req, res) => {
+router.post("/", verifyToken, multerUpload.single("file"), async (req, res) => {
   try {
     const response = await uploadController.create(req, res);
 

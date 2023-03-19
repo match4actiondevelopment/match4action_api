@@ -9,4 +9,4 @@ router.post("/", verifyToken, create);
 router.put("/:id", verifyToken, update);
 router.delete("/:id", verifyToken, remove);
 
-export { router as goalsRouter };
+export { router as goals };
