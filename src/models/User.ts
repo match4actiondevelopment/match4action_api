@@ -11,21 +11,21 @@ export enum UserRole {
 export type UserDocument = Document & {
   name: string;
   email: string;
-  image?: string;
-  birthDate?: Date;
-  password?: string;
-  provider?: {
+  termsAndConditions: boolean;
+  provider: {
     name: string;
     id: string;
   };
+  image?: string;
+  birthDate?: Date;
+  password?: string;
   location?: {
     city: string;
     country: string;
   };
   bio?: string;
   role?: UserRole;
-  termsAndConditions: boolean;
-  answers: Record<string, any>;
+  answers?: Record<string, any>;
 };
 
 const userSchema = new Schema<UserDocument>(
@@ -57,11 +57,12 @@ const userSchema = new Schema<UserDocument>(
     provider: {
       id: {
         type: String,
+        required: true,
       },
       name: {
         type: String,
         required: true,
-      },
+      }
     },
     location: {
       country: {
