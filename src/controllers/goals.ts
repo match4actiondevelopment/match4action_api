@@ -1,90 +1,115 @@
-import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-import { Goal } from '../models/Goals';
+import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
+import { Goal } from "../models/Goals";
+import { createError } from "../utils/createError";
 
-export class GoalsController {
-  async getAll(req: Request, res: Response): Promise<void> {
-    try {
-      const goals = await Goal.find();
+export const getAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const goals = await Goal.find();
 
-      res.status(200).json({
-        success: true,
-        data: goals,
-      });
-    } catch (error) {
-      res.status(404);
-    }
+    return res.status(200).json({
+      success: true,
+      data: goals,
+      message: "Goals list found.",
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  async create(req: Request, res: Response): Promise<void> {
-    try {
-      const goal = await Goal.findOne({
-        name: req.body.name,
-      });
+export const create = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const goal = await Goal.findOne({
+      name: req?.body?.name,
+    });
 
-      if (goal) {
-        throw new Error('Sustainable Development Goal already created.');
-      }
-
-      const { id } = await Goal.create(req.body);
-
-      const createdGoal = await Goal.findById(id);
-
-      if (!createdGoal) {
-        throw new Error('Sustainable Development Goal not created.');
-      }
-
-      res.status(201).json({
-        success: true,
-        data: createdGoal,
-      });
-    } catch (error) {
-      res.status(404);
+    if (goal) {
+      return next(
+        createError(404, "Sustainable Development Goal already created.")
+      );
     }
-  }
 
-  async delete(req: Request, res: Response): Promise<void> {
-    try {
-      const goal = await Goal.findById(req.params.id);
+    const { _id } = await Goal.create(req.body);
 
-      if (!goal) {
-        throw new Error('Sustainable Development Goal not found.');
-      }
+    const createdGoal = await Goal.findById(_id);
 
-      const objectId = new mongoose.Types.ObjectId(req.params.id);
-      const deletedGoal = await Goal.findOneAndDelete(objectId);
-
-      res.status(201).json({
-        success: !!deletedGoal,
-      });
-    } catch (error) {
-      res.status(404);
+    if (!createdGoal) {
+      return next(
+        createError(404, "Sustainable Development Goal not created.")
+      );
     }
+
+    return res.status(201).json({
+      success: true,
+      data: createdGoal,
+      message: "Goal created successfully.",
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  async update(req: Request, res: Response): Promise<void> {
-    try {
-      const goal = await Goal.findById(req.params.id);
+export const remove = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const goal = await Goal.findById(req.params.id);
 
-      if (!goal) {
-        throw new Error('Sustainable Development Goal not found.');
-      }
-
-      const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
-        upsert: true,
-        returnOriginal: false,
-      });
-
-      if (!updatedGoal) {
-        throw new Error('Sustainable Development Goal not updated.');
-      }
-
-      res.status(200).json({
-        success: true,
-        data: updatedGoal,
-      });
-    } catch (error) {
-      res.status(404);
+    if (!goal) {
+      throw new Error("Sustainable Development Goal not found.");
     }
+
+    const objectId = new mongoose.Types.ObjectId(req.params.id);
+    const deletedGoal = await Goal.findOneAndDelete(objectId);
+
+    return res.status(200).json({
+      success: !!deletedGoal,
+      message: "Goal removed!",
+    });
+  } catch (error) {
+    next(error);
   }
-}
+};
+
+export const update = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const goal = await Goal.findById(req.params.id);
+
+    if (!goal) {
+      return next(createError(404, "Sustainable Development Goal not found."));
+    }
+
+    const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
+      upsert: true,
+      returnOriginal: false,
+    });
+
+    if (!updatedGoal) {
+      return next(
+        createError(404, "Sustainable Development Goal not updated.")
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: updatedGoal,
+      message: "Goal updated!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

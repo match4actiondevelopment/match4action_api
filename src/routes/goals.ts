@@ -1,14 +1,12 @@
 import { Router } from "express";
-import { GoalsController } from "../controllers/goals";
-import { authGuard } from "../utils/authGuard";
+import { create, getAll, remove, update } from "../controllers/goals";
+import { verifyToken } from "../middleware/jwt";
 
 const router: Router = Router();
 
-const goals = new GoalsController();
-
-router.get("/", goals.getAll);
-router.post("/", authGuard, goals.create);
-router.put("/:id", authGuard, goals.update);
-router.delete("/:id", authGuard, goals.delete);
+router.get("/", getAll);
+router.post("/", verifyToken, create);
+router.put("/:id", verifyToken, update);
+router.delete("/:id", verifyToken, remove);
 
 export { router as goalsRouter };
