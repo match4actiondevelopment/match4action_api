@@ -37,11 +37,7 @@ export const signJwtRefreshToken = (data: SignJwtInterface) => {
   );
 };
 
-export const verifyToken = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const isLogged = (req: Request, res: Response, next: NextFunction) => {
   const token = req?.cookies?.access_token;
 
   if (!token || token === undefined) {
@@ -65,6 +61,41 @@ export const verifyToken = (
       if (err instanceof JsonWebTokenError) {
         return next(createError(403, "Jwt malformed."));
       }
+      req.user = payload;
+      next();
+    }
+  );
+};
+
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+  const token = req?.cookies?.access_token;
+
+  if (!token || token === undefined) {
+    return next(createError(401, "Access Token not provided."));
+  }
+
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
+    async (err: any, payload: any) => {
+      if (err instanceof TokenExpiredError) {
+        return next(
+          createError(403, "Unauthorized! Access Token was expired.")
+        );
+      }
+
+      if (err instanceof NotBeforeError) {
+        return next(createError(403, "Jwt not active."));
+      }
+
+      if (err instanceof JsonWebTokenError) {
+        return next(createError(403, "Jwt malformed."));
+      }
+
+      if (req.user?.role !== UserRole?.admin) {
+        return next(createError(403, "Unauthorized."));
+      }
+
       req.user = payload;
       next();
     }
