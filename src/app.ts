@@ -1,20 +1,20 @@
+import cookieParser from "cookie-parser";
 import cookieSession from "cookie-session";
 import cors from "cors";
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import passport from "passport";
 import "./config/passport";
-import { authRoutes } from "./routes/auth";
-import { goalsRouter } from "./routes/goals";
-import { initiativesRouter } from "./routes/initiatives";
-import { uploadRouter } from "./routes/upload";
-import { usersRouter } from "./routes/user";
+import { auth } from "./routes/auth";
+import { users } from "./routes/user";
+import { ErrorWithStatus } from "./utils/createError";
 import { COOKIE_KEY, MONGO_URI, PORT } from "./utils/secrets";
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(morgan("dev"));
@@ -46,15 +46,24 @@ mongoose.connect(MONGO_URI, () => {
   console.log("connected to mongodb");
 });
 
-app.use("/auth", authRoutes);
-app.use("/users", usersRouter);
-app.use("/upload", uploadRouter);
-app.use("/goals", goalsRouter);
-app.use("/initiatives", initiativesRouter);
+app.use("/auth", auth);
+app.use("/users", users);
+
+app.use(
+  (err: ErrorWithStatus, req: Request, res: Response, next: NextFunction) => {
+    const errorStatus = err.status || 500;
+    const errorMessage = err.message || "Something went wrong.";
+    return res
+      .status(errorStatus)
+      .send({ success: false, message: errorMessage });
+  }
+);
 
 app.all("*", (req, res, next) => {
-  const err = new Error(`Route ${req.originalUrl} not found`) as any;
-  err.statusCode = 404;
+  const err = new Error(
+    `Route ${req.originalUrl} not found.`
+  ) as ErrorWithStatus;
+  err.status = 404;
   next(err);
 });
 
