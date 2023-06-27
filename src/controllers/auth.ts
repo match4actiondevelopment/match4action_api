@@ -4,6 +4,7 @@ import jwt, {
   NotBeforeError,
   TokenExpiredError,
 } from "jsonwebtoken";
+import { uuid } from "uuidv4";
 import { signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
 import { User, UserRole } from "../models/User";
 import { UserToken } from "../models/UserToken";
@@ -105,7 +106,7 @@ export const register = async (
       password: newPassword,
       termsAndConditions: body?.termsAndConditions,
       provider: {
-        id: body?.provider?.id ?? crypto.randomUUID(),
+        id: body?.provider?.id ?? uuid(),
         name: body?.provider?.name,
       },
     });
