@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
-import { uploadBusiness } from "../business/upload";
+import { uploadBusiness } from "../service/upload";
 import { Initiative } from "../models/Initiatives";
 import { createError } from "../utils/createError";
 
