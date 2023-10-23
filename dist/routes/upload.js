@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.upload = void 0;
+var express_1 = require("express");
+var upload_1 = require("../controllers/upload");
+var jwt_1 = require("../middleware/jwt");
+var multer_1 = require("../middleware/multer");
+var router = (0, express_1.Router)();
+exports.upload = router;
+router.post("/", jwt_1.isLogged, multer_1.multerUpload.single("file"), upload_1.create);
