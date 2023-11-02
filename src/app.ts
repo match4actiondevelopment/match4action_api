@@ -9,8 +9,11 @@ import "./config/passport";
 import { auth, goals, initiatives, upload, users } from "./routes";
 import { ErrorWithStatus } from "./utils/createError";
 import { COOKIE_KEY, MONGO_URI, PORT } from "./utils/secrets";
+import swaggerDocs from "./swagger";
 
 const app = express();
+
+swaggerDocs(app, PORT);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -72,3 +75,5 @@ app.all("*", (req, res, next) => {
 app.listen(PORT, () => {
   console.log("App listening on port: " + PORT);
 });
+
+module.exports = app;

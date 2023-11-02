@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initiatives = void 0;
+var express_1 = require("express");
+var initiatives_1 = require("../controllers/initiatives");
+var jwt_1 = require("../middleware/jwt");
+var multer_1 = require("../middleware/multer");
+var router = (0, express_1.Router)();
+exports.initiatives = router;
+router.get("/user", jwt_1.isLogged, initiatives_1.getInitiativesByUser);
+router.patch("/subscribe/:id", jwt_1.isLogged, initiatives_1.subscribe);
+router.get("/", initiatives_1.getAll);
+router.post("/", jwt_1.isLogged, multer_1.multerUpload.single("file"), initiatives_1.create);
+router.delete("/:id", jwt_1.isLogged, initiatives_1.remove);
+router.put("/:id", jwt_1.isLogged, multer_1.multerUpload.single("file"), initiatives_1.update);
+router.get("/:id", initiatives_1.getOne);
