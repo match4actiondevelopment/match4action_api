@@ -55,13 +55,15 @@ export const getInitiativesByUser = async (
     const userId = new mongoose.Types.ObjectId(req?.user?._id);
 
     const initiatives = await Initiative.find({
-      userId,
+      applicants: userId,
     })
       .populate("goals", "name image")
       .populate("userId", "name");
 
     if (!initiatives) {
       return next(createError(404, "User initiatives not found."));
+    }else{
+      console.log(initiatives)
     }
 
     return res.status(200).send({
@@ -183,14 +185,9 @@ export const subscribe = async (
 
     const updateInitiative = new Initiative(initiative);
 
-    updateInitiative.applicants = [
-      req?.user?._id,
-      ...updateInitiative.applicants,
-    ];
-
     const updatedInitiative = await Initiative.findByIdAndUpdate(
       id,
-      updateInitiative,
+      {$addToSet: {applicants:  req?.user?._id}},
       {
         upsert: true,
         returnOriginal: false,
@@ -205,6 +202,43 @@ export const subscribe = async (
       data: updatedInitiative,
       success: true,
       message: "Initiative subscription successfully updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unsubscribe = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = new mongoose.Types.ObjectId(req?.params?.id);
+
+    const initiative = await Initiative.findById(id);
+
+    if (!initiative) {
+      return next(createError(404, "Initiative not found."));
+    }
+
+    const updatedInitiative = await Initiative.findByIdAndUpdate(
+      id,
+      { $pull: { applicants: req?.user?._id } },
+      {
+        upsert: true,
+        returnOriginal: false,
+      }
+    );
+
+    if (!updatedInitiative) {
+      return next(createError(404, "Initiative unsubscription not updated."));
+    }
+
+    return res.status(200).json({
+      data: updatedInitiative,
+      success: true,
+      message: "Initiative unsubscription successfully updated",
     });
   } catch (error) {
     next(error);

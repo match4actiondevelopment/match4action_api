@@ -1,7 +1,6 @@
 const request = require('supertest');
 const app = require('../app'); 
 
-
 beforeAll(() => {
   server = app.listen(3000); // Start the server before executing tests
 });

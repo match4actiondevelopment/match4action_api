@@ -9,6 +9,7 @@ import {
 } from "../controllers/auth";
 import validateResource from "../middleware/validateResource"
 import { loginSchema, logoutSchema, registerUserSchema} from "../schemas/auth";
+import { isLogged } from "../middleware/jwt";
 
 const router: Router = Router();
 
@@ -79,7 +80,7 @@ router.post("/register", validateResource(registerUserSchema), register);
    *      400:
    *        description: Invalid input
    */
-router.post("/logout", validateResource(logoutSchema), logout);
+router.get("/logout", isLogged, logout);
 
 /**
    * @openapi

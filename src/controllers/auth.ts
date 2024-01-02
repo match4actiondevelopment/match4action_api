@@ -5,7 +5,7 @@ import jwt, {
   TokenExpiredError,
 } from "jsonwebtoken";
 import { uuid } from "uuidv4";
-import { signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
+import { isLogged, signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
 import { User, UserRole } from "../models/User";
 import { UserToken } from "../models/UserToken";
 import { hashPassword } from "../utils/bcrypt";
@@ -101,18 +101,23 @@ export const register = async (
   }
 };
 
-// TODO Verificar se o logout é feito com o token ou com o user id
-// TODO Estudar esse esquema de logout
 export const logout = async (
   req: Request  <{}, {}, LogoutInput["body"]>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const result = await UserToken.deleteMany({ userId: req.body.user._id});
+    const access_token = req?.cookies?.access_token;
+    const decoded_token = jwt.decode(access_token);
 
-    console.log("Logout result count: " + result.deletedCount);
-
+    if (typeof decoded_token == "object"){
+      const id = decoded_token?._id;
+      const result = await UserToken.deleteMany({ userId: id});      
+      console.log("Logout result count: " + result.deletedCount);
+    } else{
+      return next(createError(500, "User not found."));
+    }
+    
     req.logOut((err) => {
       if (err) {
         return next(err);
