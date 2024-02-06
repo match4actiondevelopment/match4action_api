@@ -34,7 +34,7 @@ router.get("/user", isLogged, getInitiativesByUser);
 /**
    * @openapi
    * '/initiatives/subscribe/{id}':
-   *  get:
+   *  patch:
    *     tags:
    *     - Initiatives
    *     summary: Subscribe for the initiative
@@ -51,7 +51,7 @@ router.patch("/subscribe/:id", isLogged, subscribe);
 /**
    * @openapi
    * '/initiatives/unsubscribe/{id}':
-   *  get:
+   *  patch:
    *     tags:
    *     - Initiatives
    *     summary: Unsubscribe for the initiative

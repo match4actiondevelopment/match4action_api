@@ -62,8 +62,6 @@ export const getInitiativesByUser = async (
 
     if (!initiatives) {
       return next(createError(404, "User initiatives not found."));
-    }else{
-      console.log(initiatives)
     }
 
     return res.status(200).send({
