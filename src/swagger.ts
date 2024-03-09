@@ -43,6 +43,7 @@ function swaggerDocs(app: Express, port: number) {
   });
 
   console.log("Docs available at http://localhost:${port}/docs");
+  console.log("${__dirname}/routes/*.ts");
 }
 
 export default swaggerDocs;
