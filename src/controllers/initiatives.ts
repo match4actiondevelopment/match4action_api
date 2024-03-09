@@ -10,6 +10,9 @@ export const getAll = async (
   res: Response,
   next: NextFunction
 ) => {
+  
+  console.log('meu dir:' + __dirname);
+
   try {
     const initiatives = await Initiative.find();
 
