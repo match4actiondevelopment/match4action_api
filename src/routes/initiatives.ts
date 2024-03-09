@@ -82,8 +82,43 @@ router.patch("/unsubscribe/:id", isLogged, unsubscribe);
    */
 router.get("/", getAll);
 
+//TODO
+/**
+   * @openapi
+   * '/initiatives/':
+   *  post:
+   *     tags:
+   *     - Initiatives
+   *     summary: Create an initiative
+   *     responses:
+   *      200:
+   *        description: Success
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: '#/components/schemas/Initiative'
+   */
 router.post("/", isLogged, multerUpload.single("file"), create);
+
+//TODO
+/**
+   * @openapi
+   * '/initiatives/':
+   *  delete:
+   *     tags:
+   *     - Initiatives
+   *     summary: Delete the initiative
+   *     responses:
+   *      200:
+   *        description: Success
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: '#/components/schemas/InitiativesResponse'
+   */
 router.delete("/:id", isLogged, remove);
+
+//TODO
 router.put("/:id", isLogged, multerUpload.single("file"), update);
 
 /**

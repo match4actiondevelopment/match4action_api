@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { uploadBusiness } from "../service/upload";
-import { Initiative } from "../models/Initiatives";
+import { Initiative, InitiativeDocument } from "../models/Initiatives";
 import { createError } from "../utils/createError";
+import { type } from "os";
 
 export const getAll = async (
   req: Request,
@@ -80,15 +81,19 @@ export const create = async (
   next: NextFunction
 ) => {
   try {
+    const raw = JSON.parse(JSON.stringify(req.body));
+    console.log(raw);
+
     const endTime = new Date();
-    const [endTimeHour, endTimeMinutes] = req?.body?.endTime.split(":");
+    const startTime = new Date();
+    /*const [endTimeHour, endTimeMinutes] = req?.body?.endTime.split(":");
     endTime.setHours(endTimeHour);
     endTime.setMinutes(endTimeMinutes);
 
     const startTime = new Date();
     const [startTimeHour, startTimeMinutes] = req?.body?.startTime.split(":");
     startTime.setHours(startTimeHour);
-    startTime.setMinutes(startTimeMinutes);
+    startTime.setMinutes(startTimeMinutes);*/
 
     let image = null;
 
@@ -105,21 +110,23 @@ export const create = async (
       }
     }
 
+    console.log('passei')
     const initiative = new Initiative({
       ...req.body,
       startTime,
       endTime,
       image: [image] ?? null,
       userId: req?.user?._id,
-      whatMovesThisInitiative: JSON.parse(req.body.whatMovesThisInitiative),
-      servicesNeeded: JSON.parse(req.body.servicesNeeded),
-      whichAreasAreCoveredByThisInitiative: JSON.parse(
-        req.body.whichAreasAreCoveredByThisInitiative
-      ),
-      goals: JSON.parse(req.body.goals),
-      location: JSON.parse(req.body.location),
+      whatMovesThisInitiative: req.body.whatMovesThisInitiative,
+      servicesNeeded: req.body.servicesNeeded,
+      whichAreasAreCoveredByThisInitiative: req.body.whichAreasAreCoveredByThisInitiative,
+      location: {
+        country: req.body.location.country,
+        city: req.body.location.city
+      }
     });
 
+    console.log('passei 2')
     const { _id } = await initiative.save();
 
     const createdInitiative = await Initiative.findById(_id);
