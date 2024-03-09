@@ -28,7 +28,7 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ["/vercel/path0/src/routes/*.ts", "/vercel/path0/src/schemas/*.ts"],
+  apis: ["./src/routes/*.ts", "./src/schemas/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
