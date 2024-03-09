@@ -1,4 +1,5 @@
 import { Express, Request, Response } from "express";
+import path from "path";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
@@ -27,7 +28,7 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ["${__dirname}/routes/*.ts", "${__dirname}/schemas/*.ts"],
+  apis: [path.join(__dirname, "/routes/*.ts"), path.join(__dirname, "/schemas/*.ts")],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
@@ -43,7 +44,7 @@ function swaggerDocs(app: Express, port: number) {
   });
 
   console.log("Docs available at http://localhost:${port}/docs");
-  console.log("${__dirname}/routes/*.ts");
+  console.log(path.join(__dirname, '/routes/*.ts'));
 }
 
 export default swaggerDocs;
