@@ -28,7 +28,7 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ["routes/*.ts"],
+  apis: ["./routes/*.js"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
@@ -59,7 +59,6 @@ function swaggerDocs(app: Express, port: number) {
   // Swagger page
   console.log('meu dir em swaggerdocs  ' + __dirname);
   app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }));
-
   // Docs in JSON format
   app.get("/api-doc.json", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
