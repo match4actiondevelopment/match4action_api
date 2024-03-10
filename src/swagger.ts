@@ -11,7 +11,7 @@ const options: swaggerJsdoc.Options = {
     openapi: "3.0.0",
     info: {
       title: "Match 4 Action API Docs",
-      version: "1.0",
+      version: "2.0",
     },
     components: {
       securitySchemes: {
@@ -35,6 +35,7 @@ const swaggerSpec = swaggerJsdoc(options);
 
 function swaggerDocs(app: Express, port: number) {
   // Swagger page
+  console.log('meu dir em swaggerdocs  ' + __dirname);
   app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }));
 
   // Docs in JSON format
