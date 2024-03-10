@@ -33,6 +33,28 @@ const options: swaggerJsdoc.Options = {
 
 const swaggerSpec = swaggerJsdoc(options);
 
+import fs from 'fs';
+
+function listarArquivosEmDiretorio(caminhoDoDiretorio: string): string[] {
+  try {
+    // Leitura dos arquivos no diretório
+    const arquivos = fs.readdirSync(caminhoDoDiretorio);
+
+    // Filtrar apenas os arquivos (excluindo subdiretórios)
+    const arquivosFiltrados = arquivos.filter((arquivo) =>
+      fs.statSync(`${caminhoDoDiretorio}/${arquivo}`).isFile()
+    );
+
+    return arquivosFiltrados;
+  } catch (error) {
+    console.error(`Erro ao listar arquivos: ${error}`);
+    return [];
+  }
+}
+
+
+
+
 function swaggerDocs(app: Express, port: number) {
   // Swagger page
   console.log('meu dir em swaggerdocs  ' + __dirname);
@@ -43,6 +65,13 @@ function swaggerDocs(app: Express, port: number) {
     res.setHeader("Content-Type", "application/json");
     res.send(swaggerSpec);
   });
+
+  // Exemplo de uso
+  const diretorioParaListar = './routes/';
+  const arquivosEncontrados = listarArquivosEmDiretorio(diretorioParaListar);
+
+  console.log('Arquivos no diretório:');
+  console.log(arquivosEncontrados);
 
   console.log(process.cwd());
 }
