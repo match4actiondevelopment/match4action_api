@@ -67,7 +67,7 @@ function swaggerDocs(app: Express, port: number) {
   });
 
   // Exemplo de uso
-  const diretorioParaListar = './routes/';
+  const diretorioParaListar = '/var/task/src/routes';
   const arquivosEncontrados = listarArquivosEmDiretorio(diretorioParaListar);
 
   console.log('Arquivos no diretório:');
