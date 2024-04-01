@@ -29,7 +29,7 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   // file paths should be relative to the root directory of your Express API
-  apis: ["../src/routes/*.ts", "../src/models/*.ts"],
+  apis: ["routes/*.ts", "schemas/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
