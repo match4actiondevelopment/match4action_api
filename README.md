@@ -34,6 +34,8 @@ Resources that can help to write documentation:
 * https://www.youtube.com/watch?v=5aryMKiBEKY
 * https://github.com/TomDoesTech/REST-API-Tutorial-Updated/blob/main/README.md
 
+To import API docs into Postman, import a new collection using the url http://localhost:3003/api-doc.json
+
 # Deployment
 TODO
 
