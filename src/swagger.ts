@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import { Express, Request, Response } from "express";
 import path from "path";
 import swaggerJsdoc from "swagger-jsdoc";
@@ -29,15 +30,17 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   // file paths should be relative to the root directory of your Express API
-  apis: ["routes/*.ts", "schemas/*.ts"],
+  apis: ["src/routes/*.ts", "src/schemas/*.ts"],
 };
 
-const swaggerSpec = swaggerJsdoc(options);
-
+//TODO: I was not able to make swagger documentation dynamic using swagger jsdoc options in vercel.
+// So, as a temporary solution, the static json is being used.
+//const swaggerSpec = swaggerJsdoc(options);
+const jsonContent = fs.readFileSync(path.join(__dirname,'api-doc.json'));
+const swaggerSpec = JSON.parse(jsonContent.toString());
 
 function swaggerDocs(app: Express, port: number) {
   // Swagger page
-  console.log('meu dir em swaggerdocs  ' + __dirname);
   app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }));
   // Docs in JSON format
   app.get("/api-doc.json", (req: Request, res: Response) => {
