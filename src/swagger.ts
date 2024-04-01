@@ -3,6 +3,9 @@ import path from "path";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
+const CSS_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
@@ -25,21 +28,22 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ["src/routes/*.ts", "src/models/*.ts"],
+  // file paths should be relative to the root directory of your Express API
+  apis: ["../src/routes/*.ts", "../src/models/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
 
+
 function swaggerDocs(app: Express, port: number) {
   // Swagger page
-  app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log('meu dir em swaggerdocs  ' + __dirname);
+  app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }));
   // Docs in JSON format
   app.get("/api-doc.json", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
     res.send(swaggerSpec);
   });
-
-  console.log("Docs available at http://localhost:${port}/docs");
 }
 
 export default swaggerDocs;
