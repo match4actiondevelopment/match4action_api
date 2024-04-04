@@ -27,6 +27,8 @@ app.use(
       "https://match4action-web.vercel.app",
       "http://match4action-api.onrender.com",
       "https://match4action-api.onrender.com",
+      "http://match4action-api.vercel.app",
+      "https://match4action-api.vercel.app",
     ],
     credentials: true,
   })
