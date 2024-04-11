@@ -80,7 +80,7 @@ router.post("/register", validateResource(registerUserSchema), register);
    *      400:
    *        description: Invalid input
    */
-router.get("/logout", isLogged, logout);
+router.post("/logout", isLogged, logout);
 
 /**
    * @openapi
