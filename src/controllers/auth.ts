@@ -28,8 +28,8 @@ export const login = async (
     }
 
     return res
-      .cookie("access_token", loginDone.access_token, { httpOnly: true, domain: "localhost" })
-      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, domain: "localhost" })
+      .cookie("access_token", loginDone.access_token, { httpOnly: true })
+      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true })
       .status(200)
       .send({
         data: loginDone.data,
