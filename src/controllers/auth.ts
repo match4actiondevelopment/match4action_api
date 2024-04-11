@@ -28,8 +28,8 @@ export const login = async (
     }
 
     return res
-      .cookie("access2token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true })
-      .cookie("refresh2token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true })
       .status(200)
       .send({
         data: loginDone.data,
