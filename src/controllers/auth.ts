@@ -27,10 +27,7 @@ export const login = async (
       next(createError(404, "Login unsuccessfull"));
     }
 
-    let host = req.get('host');
-    console.log("the host is " + host)
-    var origin = req.get('origin')?.replace("https://", "");
-    console.log("the origin is " + origin)
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","");
 
     return res
       .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin })
@@ -92,10 +89,7 @@ export const register = async (
 
     newUser.password = undefined;
 
-    let host = req.get('host');
-    console.log("the host is " + host)
-    var origin = req.get('origin')?.replace("https://", "");
-    console.log("the origin is " + origin)
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","");
 
     return res
       .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true, domain: origin})
@@ -155,12 +149,8 @@ export const refreshToken = async (
 ) => {
   try {
     const token = req?.cookies?.refresh_token;
-    
-    console.log("Token: " + token) 
 
     const refreshToken = await UserToken.findOne({ token });
-
-    console.log("achou Token? " + token) 
 
     if (!refreshToken) {
       return next(createError(404, "Refresh token is not in database."));
@@ -206,10 +196,7 @@ export const refreshToken = async (
       role: user.role!,
     });
 
-    let host = req.get('host');
-    console.log("the host is " + host)
-    var origin = req.get('origin')?.replace("https://", "");
-    console.log("the origin is " + origin)
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","");
 
     return res
       .cookie("access_token", access_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin })
