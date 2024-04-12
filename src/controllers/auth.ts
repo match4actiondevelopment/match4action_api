@@ -29,7 +29,7 @@ export const login = async (
 
     let host = req.get('host');
     console.log("the host is " + host)
-    var origin = req.get('origin');
+    var origin = req.get('origin')?.replace("https://", "");
     console.log("the origin is " + origin)
 
     return res
@@ -94,7 +94,7 @@ export const register = async (
 
     let host = req.get('host');
     console.log("the host is " + host)
-    var origin = req.get('origin');
+    var origin = req.get('origin')?.replace("https://", "");
     console.log("the origin is " + origin)
 
     return res
@@ -208,7 +208,7 @@ export const refreshToken = async (
 
     let host = req.get('host');
     console.log("the host is " + host)
-    var origin = req.get('origin');
+    var origin = req.get('origin')?.replace("https://", "");
     console.log("the origin is " + origin)
 
     return res
