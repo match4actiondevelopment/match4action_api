@@ -28,6 +28,7 @@ export const login = async (
     }
 
     var origin = req.get('origin')?.replace("https://", "").replace("http://","");
+    console.log("the origin is" + origin)
 
     return res
       .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin })
@@ -90,6 +91,7 @@ export const register = async (
     newUser.password = undefined;
 
     var origin = req.get('origin')?.replace("https://", "").replace("http://","");
+    console.log("the origin is" + origin)
 
     return res
       .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true, domain: origin})
@@ -197,6 +199,7 @@ export const refreshToken = async (
     });
 
     var origin = req.get('origin')?.replace("https://", "").replace("http://","");
+    console.log("the origin is" + origin)
 
     return res
       .cookie("access_token", access_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin })
