@@ -129,8 +129,8 @@ export const logout = async (
     });
 
     return res
-      .clearCookie("access_token")
-      .clearCookie("refresh_token")
+      .clearCookie("access_token",  { httpOnly: true, domain: origin })
+      .clearCookie("refresh_token",  { httpOnly: true, domain: origin })
       .status(200)
       .send({
         success: true,
