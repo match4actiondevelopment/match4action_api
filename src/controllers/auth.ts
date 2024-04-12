@@ -29,10 +29,12 @@ export const login = async (
 
     let host = req.get('host');
     console.log("the host is " + host)
+    var origin = req.get('origin');
+    console.log("the origin is " + origin)
 
     return res
-      .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true, domain: host })
-      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true, domain: host})
+      .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin })
+      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin})
       .status(200)
       .send({
         data: loginDone.data,
@@ -92,10 +94,12 @@ export const register = async (
 
     let host = req.get('host');
     console.log("the host is " + host)
+    var origin = req.get('origin');
+    console.log("the origin is " + origin)
 
     return res
-      .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true, domain: host})
-      .cookie("refresh_token", refresh_token, { httpOnly: false , sameSite: "none", secure: true, domain: host})
+      .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true, domain: origin})
+      .cookie("refresh_token", refresh_token, { httpOnly: false , sameSite: "none", secure: true, domain: origin})
       .status(201)
       .send({
         data: newUser,
@@ -204,10 +208,12 @@ export const refreshToken = async (
 
     let host = req.get('host');
     console.log("the host is " + host)
-    
+    var origin = req.get('origin');
+    console.log("the origin is " + origin)
+
     return res
-      .cookie("access_token", access_token, { httpOnly: true, sameSite: "none", secure: true, domain: host })
-      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, sameSite: "none", secure: true, domain: host})
+      .cookie("access_token", access_token, { httpOnly: true, sameSite: "none", secure: true, domain: origin })
+      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, sameSite: "none", secure: true, domain: origin})
       .status(201)
       .send({
         success: true,
