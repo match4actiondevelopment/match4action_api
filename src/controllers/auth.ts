@@ -27,9 +27,11 @@ export const login = async (
       next(createError(404, "Login unsuccessfull"));
     }
 
+    let host = req.get('host');
+
     return res
-      .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true })
-      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("access_token", loginDone.access_token, { httpOnly: true, domain: host })
+      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, domain: host})
       .status(200)
       .send({
         data: loginDone.data,
@@ -87,9 +89,11 @@ export const register = async (
 
     newUser.password = undefined;
 
+    let host = req.get('host');
+
     return res
-      .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true, domain: "match4action.vercel.app"})
-      .cookie("refresh_token", refresh_token, { httpOnly: false , sameSite: "none" , secure: true, domain: "match4action.vercel.app"})
+      .cookie("access_token", access_token, { httpOnly: false , domain: host})
+      .cookie("refresh_token", refresh_token, { httpOnly: false , domain: host})
       .status(201)
       .send({
         data: newUser,
@@ -125,8 +129,8 @@ export const logout = async (
     });
 
     return res
-      .clearCookie("access_token", { sameSite: "none", secure: true })
-      .clearCookie("refresh_token", { sameSite: "none", secure: true })
+      .clearCookie("access_token")
+      .clearCookie("refresh_token")
       .status(200)
       .send({
         success: true,
@@ -196,9 +200,11 @@ export const refreshToken = async (
       role: user.role!,
     });
 
+    let host = req.get('host');
+
     return res
-      .cookie("access_token", access_token, { httpOnly: true })
-      .cookie("refresh_token", refreshToken?.token, { httpOnly: true })
+      .cookie("access_token", access_token, { httpOnly: true, domain: host })
+      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, domain: host})
       .status(201)
       .send({
         success: true,
