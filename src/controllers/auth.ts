@@ -88,8 +88,8 @@ export const register = async (
     newUser.password = undefined;
 
     return res
-      .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true})
-      .cookie("refresh_token", refresh_token, { httpOnly: false , sameSite: "none" , secure: true})
+      .cookie("access_token", access_token, { httpOnly: false , sameSite: "none", secure: true, domain: "match4action.vercel.app"})
+      .cookie("refresh_token", refresh_token, { httpOnly: false , sameSite: "none" , secure: true, domain: "match4action.vercel.app"})
       .status(201)
       .send({
         data: newUser,
