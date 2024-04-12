@@ -50,11 +50,11 @@ mongoose.connect(MONGO_URI, () => {
   console.log("connected to mongodb");
 });
 
-app.use("/auth", auth);
-app.use("/users", users);
-app.use("/goals", goals);
-app.use("/initiatives", initiatives);
-app.use("/upload", upload);
+app.use("/api//auth", auth);
+app.use("/api/users", users);
+app.use("/api/goals", goals);
+app.use("/api/initiatives", initiatives);
+app.use("/api/upload", upload);
 
 app.use(
   (err: ErrorWithStatus, req: Request, res: Response, next: NextFunction) => {

@@ -41,9 +41,9 @@ const swaggerSpec = JSON.parse(jsonContent.toString());
 
 function swaggerDocs(app: Express, port: number) {
   // Swagger page
-  app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }));
+  app.use("/api/doc", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }));
   // Docs in JSON format
-  app.get("/api-doc.json", (req: Request, res: Response) => {
+  app.get("/api/doc.json", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
     res.send(swaggerSpec);
   });
