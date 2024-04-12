@@ -27,7 +27,7 @@ export const login = async (
       next(createError(404, "Login unsuccessfull"));
     }
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","");
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
 
     return res
       .cookie("access_token", loginDone.access_token, { httpOnly: true, domain: origin })
@@ -89,7 +89,7 @@ export const register = async (
 
     newUser.password = undefined;
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","");
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
 
     return res
       .cookie("access_token", access_token, { httpOnly: false , domain: origin})
@@ -127,6 +127,8 @@ export const logout = async (
         return next(err);
       }
     });
+
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
 
     return res
       .clearCookie("access_token",  { httpOnly: true, domain: origin })
@@ -196,7 +198,7 @@ export const refreshToken = async (
       role: user.role!,
     });
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","");
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
 
     return res
       .cookie("access_token", access_token, { httpOnly: true, domain: origin })
