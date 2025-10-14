@@ -13,6 +13,12 @@ import { auth, goals, initiatives, upload, users } from "./routes";
 // Ikigai questions route
 import ikigaiQuestions from "./routes/ikigai-questions";
 
+// Matching route
+import matching from "./routes/matching";
+
+// Ikigai responses route
+import ikigaiResponses from "./routes/ikigai-responses";
+
 import { ErrorWithStatus } from "./utils/createError";
 import { COOKIE_KEY, MONGO_URI, PORT } from "./utils/secrets";
 import swaggerDocs from "./swagger";
@@ -69,6 +75,8 @@ app.use("/goals", goals);
 app.use("/initiatives", initiatives);
 app.use("/upload", upload);
 app.use("/ikigai-questions", ikigaiQuestions); // <-- FIXED: mounted before 404
+app.use("/ikigai-responses", ikigaiResponses);
+app.use("/matching", matching);
 
 // ------------------
 // Error handling
