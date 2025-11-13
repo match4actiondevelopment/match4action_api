@@ -72,6 +72,42 @@ router.patch("/unsubscribe/:id", isLogged, unsubscribe);
    *     tags:
    *     - Initiatives
    *     summary: Get all initiatives
+   *     parameters:
+   *      - in: query
+   *        name: country
+   *        schema:
+   *          type: string
+   *        required: false
+   *        description: Filter initiatives by country (case-insensitive partial match)
+   *        example: United States
+   *      - in: query
+   *        name: city
+   *        schema:
+   *          type: string
+   *        required: false
+   *        description: Filter initiatives by city (case-insensitive partial match)
+   *        example: New York
+   *      - in: query
+   *        name: location
+   *        schema:
+   *          type: string
+   *        required: false
+   *        description: Filter initiatives by location - searches in both city and country fields (case-insensitive partial match). Use this when you want to search in either field, or use city and country parameters for specific field searches.
+   *        example: New York
+   *      - in: query
+   *        name: search
+   *        schema:
+   *          type: string
+   *        required: false
+   *        description: Search initiatives by keywords - searches in initiative name, description, services needed, what moves this initiative, and areas covered (case-insensitive partial match)
+   *        example: education
+   *      - in: query
+   *        name: q
+   *        schema:
+   *          type: string
+   *        required: false
+   *        description: Alias for search parameter
+   *        example: education
    *     responses:
    *      200:
    *        description: Success

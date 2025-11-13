@@ -14,7 +14,60 @@ export const getAll = async (
   console.log('meu dir:' + __dirname);
 
   try {
-    const initiatives = await Initiative.find();
+    // Extract location filter parameters from query string
+    const { country, city, location, search, q } = req.query;
+    
+    // Build filter object
+    const filter: any = {};
+    
+    // Support both explicit country/city params and a general location param
+    if (country || city) {
+      filter.location = {};
+      if (country) {
+        // Case-insensitive partial match for country
+        filter.location.country = { $regex: country as string, $options: 'i' };
+      }
+      if (city) {
+        // Case-insensitive partial match for city
+        filter.location.city = { $regex: city as string, $options: 'i' };
+      }
+    } else if (location) {
+      // If only a general location is provided, search in both city and country
+      const locationRegex = { $regex: location as string, $options: 'i' };
+      filter.$or = [
+        { 'location.city': locationRegex },
+        { 'location.country': locationRegex }
+      ];
+    }
+
+    // Search functionality - search in multiple fields
+    const searchQuery = search || q;
+    if (searchQuery) {
+      const searchRegex = { $regex: searchQuery as string, $options: 'i' };
+      const searchConditions: any[] = [
+        { initiativeName: searchRegex },
+        { description: searchRegex },
+        { 'servicesNeeded': searchRegex },
+        { 'whatMovesThisInitiative': searchRegex },
+        { 'whichAreasAreCoveredByThisInitiative': searchRegex }
+      ];
+
+      // If we already have location filters, combine with $and
+      if (filter.$or || filter.location) {
+        filter.$and = [
+          ...(filter.$or ? [{ $or: filter.$or }] : []),
+          ...(filter.location ? [{ location: filter.location }] : []),
+          { $or: searchConditions }
+        ];
+        // Clear the old filters since we're using $and now
+        delete filter.$or;
+        delete filter.location;
+      } else {
+        filter.$or = searchConditions;
+      }
+    }
+
+    const initiatives = await Initiative.find(filter);
 
     return res.status(200).send({
       data: initiatives,
