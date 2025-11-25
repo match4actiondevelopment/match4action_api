@@ -34,7 +34,7 @@ const initiativeSchema = new Schema<InitiativeDocument>(
     applicants: [
       {
         type: Schema.Types.ObjectId,
-        ref: "User",
+        ref: "User"
       },
     ],
     eventItemFrame: {

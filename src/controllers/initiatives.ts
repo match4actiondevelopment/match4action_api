@@ -1,16 +1,73 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
-import { uploadBusiness } from "../business/upload";
-import { Initiative } from "../models/Initiatives";
+import { uploadBusiness } from "../service/upload";
+import { Initiative, InitiativeDocument } from "../models/Initiatives";
 import { createError } from "../utils/createError";
+import { type } from "os";
 
 export const getAll = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  
+  console.log('meu dir:' + __dirname);
+
   try {
-    const initiatives = await Initiative.find();
+    // Extract location filter parameters from query string
+    const { country, city, location, search, q } = req.query;
+    
+    // Build filter object
+    const filter: any = {};
+    
+    // Support both explicit country/city params and a general location param
+    if (country || city) {
+      filter.location = {};
+      if (country) {
+        // Case-insensitive partial match for country
+        filter.location.country = { $regex: country as string, $options: 'i' };
+      }
+      if (city) {
+        // Case-insensitive partial match for city
+        filter.location.city = { $regex: city as string, $options: 'i' };
+      }
+    } else if (location) {
+      // If only a general location is provided, search in both city and country
+      const locationRegex = { $regex: location as string, $options: 'i' };
+      filter.$or = [
+        { 'location.city': locationRegex },
+        { 'location.country': locationRegex }
+      ];
+    }
+
+    // Search functionality - search in multiple fields
+    const searchQuery = search || q;
+    if (searchQuery) {
+      const searchRegex = { $regex: searchQuery as string, $options: 'i' };
+      const searchConditions: any[] = [
+        { initiativeName: searchRegex },
+        { description: searchRegex },
+        { 'servicesNeeded': searchRegex },
+        { 'whatMovesThisInitiative': searchRegex },
+        { 'whichAreasAreCoveredByThisInitiative': searchRegex }
+      ];
+
+      // If we already have location filters, combine with $and
+      if (filter.$or || filter.location) {
+        filter.$and = [
+          ...(filter.$or ? [{ $or: filter.$or }] : []),
+          ...(filter.location ? [{ location: filter.location }] : []),
+          { $or: searchConditions }
+        ];
+        // Clear the old filters since we're using $and now
+        delete filter.$or;
+        delete filter.location;
+      } else {
+        filter.$or = searchConditions;
+      }
+    }
+
+    const initiatives = await Initiative.find(filter);
 
     return res.status(200).send({
       data: initiatives,
@@ -55,7 +112,7 @@ export const getInitiativesByUser = async (
     const userId = new mongoose.Types.ObjectId(req?.user?._id);
 
     const initiatives = await Initiative.find({
-      userId,
+      applicants: userId,
     })
       .populate("goals", "name image")
       .populate("userId", "name");
@@ -80,15 +137,19 @@ export const create = async (
   next: NextFunction
 ) => {
   try {
+    const raw = JSON.parse(JSON.stringify(req.body));
+    console.log(raw);
+
     const endTime = new Date();
-    const [endTimeHour, endTimeMinutes] = req?.body?.endTime.split(":");
+    const startTime = new Date();
+    /*const [endTimeHour, endTimeMinutes] = req?.body?.endTime.split(":");
     endTime.setHours(endTimeHour);
     endTime.setMinutes(endTimeMinutes);
 
     const startTime = new Date();
     const [startTimeHour, startTimeMinutes] = req?.body?.startTime.split(":");
     startTime.setHours(startTimeHour);
-    startTime.setMinutes(startTimeMinutes);
+    startTime.setMinutes(startTimeMinutes);*/
 
     let image = null;
 
@@ -105,21 +166,23 @@ export const create = async (
       }
     }
 
+    console.log('passei')
     const initiative = new Initiative({
       ...req.body,
       startTime,
       endTime,
       image: [image] ?? null,
       userId: req?.user?._id,
-      whatMovesThisInitiative: JSON.parse(req.body.whatMovesThisInitiative),
-      servicesNeeded: JSON.parse(req.body.servicesNeeded),
-      whichAreasAreCoveredByThisInitiative: JSON.parse(
-        req.body.whichAreasAreCoveredByThisInitiative
-      ),
-      goals: JSON.parse(req.body.goals),
-      location: JSON.parse(req.body.location),
+      whatMovesThisInitiative: req.body.whatMovesThisInitiative,
+      servicesNeeded: req.body.servicesNeeded,
+      whichAreasAreCoveredByThisInitiative: req.body.whichAreasAreCoveredByThisInitiative,
+      location: {
+        country: req.body.location.country,
+        city: req.body.location.city
+      }
     });
 
+    console.log('passei 2')
     const { _id } = await initiative.save();
 
     const createdInitiative = await Initiative.findById(_id);
@@ -183,14 +246,9 @@ export const subscribe = async (
 
     const updateInitiative = new Initiative(initiative);
 
-    updateInitiative.applicants = [
-      req?.user?._id,
-      ...updateInitiative.applicants,
-    ];
-
     const updatedInitiative = await Initiative.findByIdAndUpdate(
       id,
-      updateInitiative,
+      {$addToSet: {applicants:  req?.user?._id}},
       {
         upsert: true,
         returnOriginal: false,
@@ -205,6 +263,43 @@ export const subscribe = async (
       data: updatedInitiative,
       success: true,
       message: "Initiative subscription successfully updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unsubscribe = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = new mongoose.Types.ObjectId(req?.params?.id);
+
+    const initiative = await Initiative.findById(id);
+
+    if (!initiative) {
+      return next(createError(404, "Initiative not found."));
+    }
+
+    const updatedInitiative = await Initiative.findByIdAndUpdate(
+      id,
+      { $pull: { applicants: req?.user?._id } },
+      {
+        upsert: true,
+        returnOriginal: false,
+      }
+    );
+
+    if (!updatedInitiative) {
+      return next(createError(404, "Initiative unsubscription not updated."));
+    }
+
+    return res.status(200).json({
+      data: updatedInitiative,
+      success: true,
+      message: "Initiative unsubscription successfully updated",
     });
   } catch (error) {
     next(error);
