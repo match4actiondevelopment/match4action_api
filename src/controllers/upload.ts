@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { uploadBusiness } from "../business/upload";
+import { uploadBusiness } from "../service/upload";
 import { User } from "../models/User";
 import { createError } from "../utils/createError";
 

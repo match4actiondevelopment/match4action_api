@@ -5,72 +5,36 @@ import jwt, {
   TokenExpiredError,
 } from "jsonwebtoken";
 import { uuid } from "uuidv4";
-import { signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
+import { isLogged, signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
 import { User, UserRole } from "../models/User";
 import { UserToken } from "../models/UserToken";
-import { comparePasswords, hashPassword } from "../utils/bcrypt";
+import { hashPassword } from "../utils/bcrypt";
 import { createError } from "../utils/createError";
 import { CLIENT_BASE_URL } from "../utils/secrets";
-
-interface LoginBodyInterface {
-  email: string;
-  password: string;
-}
+import { LoginInput, LogoutInput, RegisterUserInput } from "../schemas/auth";
+import { doLogin } from "../service/auth";
 
 export const login = async (
-  req: Request,
+  req: Request <{}, {}, LoginInput["body"]>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const body = req?.body as LoginBodyInterface;
+    
+    const loginDone = await doLogin(req);
 
-    const user = await User.findOne({ email: body?.email });
-
-    if (!user) {
-      return next(createError(404, "User not found."));
+    if (loginDone.success == false){
+      next(createError(404, "Login unsuccessfull"));
     }
 
-    const comparedPassword = await comparePasswords(
-      body?.password,
-      user?.password as string
-    );
-
-    if (!comparedPassword) {
-      return next(createError(404, "Invalid email or password."));
-    }
-
-    const access_token = signJwtAccessToken({
-      _id: user._id!,
-      email: user.email!,
-      role: user.role!,
-    });
-
-    const refresh_token = signJwtRefreshToken({
-      _id: user._id!,
-      email: user.email!,
-      role: user.role!,
-    });
-
-    const userToken = new UserToken({
-      token: refresh_token,
-      userId: user?._id,
-    });
-
-    const addedUserToken = await userToken.save();
-
-    if (!addedUserToken) {
-      return next(createError(404, "Error creating refresh token."));
-    }
-
-    user.password = undefined;
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
 
     return res
-      .cookie("access_token", access_token, { httpOnly: true })
-      .cookie("refresh_token", refresh_token, { httpOnly: true })
+      .cookie("access_token", loginDone.access_token, { httpOnly: true, domain: origin })
+      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, domain: origin})
       .status(200)
       .send({
-        data: user,
+        data: loginDone.data,
         success: true,
         message: "User logged successfully.",
       });
@@ -79,35 +43,24 @@ export const login = async (
   }
 };
 
-interface RegisterBodyInterface {
-  name: string;
-  email: string;
-  password: string;
-  termsAndConditions: boolean;
-  provider: {
-    id?: string;
-    name: string;
-  };
-}
-
+//TODO Move this code to service layer
 export const register = async (
-  req: Request,
+  req: Request <{}, {}, RegisterUserInput["body"]> ,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const body = req?.body as RegisterBodyInterface;
-
-    const newPassword = await hashPassword(body?.password);
+    
+    const newPassword = await hashPassword(req.body?.password);
 
     const newUser = await User.create({
-      name: body?.name,
-      email: body?.email,
+      name: req.body?.name,
+      email: req.body?.email,
       password: newPassword,
-      termsAndConditions: body?.termsAndConditions,
+      termsAndConditions: req.body?.termsAndConditions,
       provider: {
-        id: body?.provider?.id ?? uuid(),
-        name: body?.provider?.name,
+        id: req.body?.provider?.id ?? uuid(),
+        name: req.body?.provider?.name,
       },
     });
 
@@ -136,9 +89,11 @@ export const register = async (
 
     newUser.password = undefined;
 
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
+
     return res
-      .cookie("access_token", access_token, { httpOnly: true })
-      .cookie("refresh_token", refresh_token, { httpOnly: true })
+      .cookie("access_token", access_token, { httpOnly: false , domain: origin})
+      .cookie("refresh_token", refresh_token, { httpOnly: false , domain: origin})
       .status(201)
       .send({
         data: newUser,
@@ -151,22 +106,33 @@ export const register = async (
 };
 
 export const logout = async (
-  req: Request,
+  req: Request  <{}, {}, LogoutInput["body"]>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    await UserToken.deleteMany({ userId: req.user?._id });
+    const access_token = req?.cookies?.access_token;
+    const decoded_token = jwt.decode(access_token);
 
+    if (typeof decoded_token == "object"){
+      const id = decoded_token?._id;
+      const result = await UserToken.deleteMany({ userId: id});      
+      console.log("Logout result count: " + result.deletedCount);
+    } else{
+      return next(createError(500, "User not found."));
+    }
+    
     req.logOut((err) => {
       if (err) {
         return next(err);
       }
     });
 
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
+
     return res
-      .clearCookie("access_token", { sameSite: "none", secure: true })
-      .clearCookie("refresh_token", { sameSite: "none", secure: true })
+      .clearCookie("access_token",  { httpOnly: true, domain: origin })
+      .clearCookie("refresh_token",  { httpOnly: true, domain: origin })
       .status(200)
       .send({
         success: true,
@@ -177,6 +143,7 @@ export const logout = async (
   }
 };
 
+// TODO Move this code to service layer
 export const refreshToken = async (
   req: Request,
   res: Response,
@@ -231,9 +198,11 @@ export const refreshToken = async (
       role: user.role!,
     });
 
+    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
+
     return res
-      .cookie("access_token", access_token, { httpOnly: true })
-      .cookie("refresh_token", refreshToken?.token, { httpOnly: true })
+      .cookie("access_token", access_token, { httpOnly: true, domain: origin })
+      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, domain: origin})
       .status(201)
       .send({
         success: true,
