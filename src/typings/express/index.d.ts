@@ -6,6 +6,10 @@ declare global {
       user?: UserDocument | null;
       file?: Express.Multer.File;
       files?: Express.Multer.File[];
+      logOut?: (
+        options?: any,
+        done?: (err?: any) => void
+      ) => void;
     }
 
     namespace Multer {
@@ -19,4 +23,11 @@ declare global {
   }
 }
 
+// Declare modules that may not have type definitions
+declare module "jsonwebtoken";
+declare module "passport";
+declare module "bcrypt";
+declare module "multer";
+
 export {};
+
