@@ -97,8 +97,11 @@ app.all("*", (req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`App listening on port: ${PORT}`);
-});
+// Start server if not running in Vercel (or other serverless environment)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`App listening on port: ${PORT}`);
+  });
+}
 
 export default app;
