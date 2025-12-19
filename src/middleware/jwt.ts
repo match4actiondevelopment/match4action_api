@@ -21,7 +21,7 @@ export const signJwtAccessToken = (data: SignJwtInterface) => {
       email: data?.email,
     },
     process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
-    { expiresIn: process.env.ACCESS_TOKEN_PRIVATE_TIME }
+    { expiresIn: process.env.ACCESS_TOKEN_PRIVATE_TIME as string }
   );
 };
 
@@ -33,7 +33,7 @@ export const signJwtRefreshToken = (data: SignJwtInterface) => {
       email: data?.email,
     },
     process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
-    { expiresIn: process.env.REFRESH_TOKEN_PRIVATE_TIME }
+    { expiresIn: process.env.REFRESH_TOKEN_PRIVATE_TIME as string }
   );
 };
 
