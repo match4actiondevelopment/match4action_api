@@ -8,7 +8,7 @@
     "dev": "nodemon src/app.ts",
     "test": "npx jest",
     "build": "tsc -p .",
-    "vercel-build": "echo hello"
+    "vercel-build": "npm run build"
   },
   "keywords": [],
   "author": "",
