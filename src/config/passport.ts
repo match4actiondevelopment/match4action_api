@@ -8,7 +8,7 @@ import {
 } from "../utils/secrets";
 
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, (user as any)._id);
 });
 
 passport.deserializeUser(async (id, done) => {
