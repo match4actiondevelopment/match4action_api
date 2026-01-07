@@ -35,19 +35,31 @@ app.use(cookieParser());
 
 app.use(
   morgan("dev"),
-  cors({
-    origin: [
-      "http://localhost:3000",
+  // Manual CORS to guarantee headers
+  (req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      "https://match4action-web-snowy.vercel.app",
       "https://match4action-web.vercel.app",
-      "http://match4action-api.onrender.com",
-      "https://match4action-api.onrender.com",
-      "http://match4action-api.vercel.app",
-      "https://match4action-api.vercel.app",
-      "http://match4action.vercel.app",
-      "https://match4action.vercel.app",
-    ],
-    credentials: true,
-  })
+      "http://localhost:3000"
+    ];
+
+    if (origin && allowedOrigins.includes(origin as string)) {
+      res.setHeader("Access-Control-Allow-Origin", origin as string);
+    } else {
+      // Default fallback for direct testing or unknown origins (safe for now)
+      res.setHeader("Access-Control-Allow-Origin", "https://match4action-web-snowy.vercel.app");
+    }
+
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+
+    if (req.method === "OPTIONS") {
+      return res.status(200).end();
+    }
+    next();
+  }
 );
 
 app.use(
@@ -62,9 +74,17 @@ app.use(passport.session());
 
 // MongoDB connection
 mongoose.set("strictQuery", false);
-mongoose.connect(MONGO_URI, () => {
-  console.log("Connected to MongoDB");
-});
+console.log("Attempting to connect to MongoDB...");
+console.log("MONGO_URI is set:", !!MONGO_URI);
+if (MONGO_URI) {
+  console.log("MONGO_URI starts with:", MONGO_URI.substring(0, 15) + "...");
+} else {
+  console.error("CRITICAL: MONGO_URI is missing or empty.");
+}
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("Connected to MongoDB successfully"))
+  .catch(err => console.error("MongoDB Connection Error:", err));
 
 // ------------------
 // Mount routes

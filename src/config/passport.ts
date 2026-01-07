@@ -7,8 +7,8 @@ import {
   GOOGLE_CLIENT_SECRET,
 } from "../utils/secrets";
 
-passport.serializeUser((user, done) => {
-  done(null, (user as any)._id);
+passport.serializeUser((user: any, done) => {
+  done(null, user._id);
 });
 
 passport.deserializeUser(async (id, done) => {

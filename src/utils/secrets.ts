@@ -12,7 +12,7 @@ const prod = ENVIRONMENT === 'production';
 
 export const PORT = (process.env.PORT || 3003) as number;
 
-export const MONGO_URI = prod ? (process.env.MONGO_PROD as string) : (process.env.MONGO_LOCAL as string);
+export const MONGO_URI = (process.env.MONGO_URI || process.env.MONGO_PROD || process.env.MONGO_LOCAL) as string;
 
 if (!MONGO_URI) {
   if (prod) {
