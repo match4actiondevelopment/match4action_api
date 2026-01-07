@@ -16,23 +16,14 @@ You can deploy both to Vercel. The recommended approach is to deploy them as sep
 
 ## Part 1: Deploying the Backend (`match4action_api`)
 
-The backend is configured to run as a Serverless Function on Vercel using the `api/index.ts` entry point.
+**(You have already completed this step!)**
 
-1.  **Go to Vercel Dashboard**: Click "Add New..." -> "Project".
-2.  **Import Repository**: Select your Git repository.
-3.  **Configure Project**:
-    *   **Root Directory**: Choose `match4action_api`.
-    *   **Framework Preset**: Select "Other" (or Vercel might auto-detect generic Node.js).
-    *   **Build Command**: `npm run vercel-build` (which runs `npm run build`).
-        *   *Note*: Ensure your `package.json` has `"vercel-build": "npm run build"`.
-    *   **Output Directory**: `dist` (or `.` if you are just compiling TS in place).
-        *   *Check*: Your `tsconfig.json` usually defines `outDir`. If it's `dist`, set it here.
-4.  **Environment Variables**:
-    *   Add all variables from your `.env` file (e.g., `MONGO_URI`, `COOKIE_KEY`, `JWT_SECRET`, etc.).
-5.  **Deploy**: Click "Deploy".
-
-**Verification**:
-Once deployed, visit your Vercel URL (e.g., `https://match4action-api.vercel.app`). You should see your API response (or a 404 for root if no root route is defined). Try `/health` or a known route.
+*   **Project Name**: e.g., `match4action-api`
+*   **Root Directory**: `match4action_api`
+*   **Install Command**: (Leave empty, or `npm install`)
+*   **Build Command**: `npm run vercel-build` (We updated this to `npm run build`)
+*   **Output Directory**: `dist`
+*   **Environment Variables**: `MONGO_LOCAL`, `CLIENT_BASE_URL` (set to your frontend URL), etc.
 
 ---
 
@@ -43,23 +34,46 @@ The frontend is a standard Next.js application.
 1.  **Go to Vercel Dashboard**: Click "Add New..." -> "Project".
 2.  **Import Repository**: Select the *same* Git repository.
 3.  **Configure Project**:
+    *   **Project Name**: e.g., `match4action-web`
     *   **Root Directory**: Choose `match4action_web`.
     *   **Framework Preset**: Vercel should auto-detect "Next.js".
+    *   **Build Command**: `next build` (Default is fine).
+    *   **Output Directory**: `.next` (Default is fine).
+
 4.  **Environment Variables**:
-    *   `NEXT_PUBLIC_API_URL`: Set this to the URL of your deployed backend from Part 1 (e.g., `https://match4action-api.vercel.app`).
-    *   Add any other required variables (Contentful keys, etc.).
+    You **MUST** add these in the Vercel Project Settings:
+
+    | Variable | Value | Description |
+    | :--- | :--- | :--- |
+    | `NEXT_PUBLIC_API_PATH` | `https://<your-backend>.vercel.app` | **Critical**: URL of your deployed backend. **Do not** add a trailing slash. |
+    | `NEXT_PUBLIC_SITE_IDENTIFIER` | *(Copy from local .env)* | Used for site identification. |
+    | `CONTENTFUL_SPACE_ID` | *(Copy from local .env)* | Contentful CMS ID. |
+    | `CONTENTFUL_PUBLIC_ACCESS_TOKEN`| *(Copy from local .env)* | Contentful API Key. |
+    | `CONTENTFUL_HOST` | `cdn.contentful.com` | Usually this, check your local .env. |
+    | `CONTENTFUL_ENVIRONMENT` | `master` | Default is usually 'master'. |
+
 5.  **Deploy**: Click "Deploy".
+
+---
+
+## Part 3: Connecting them (CORS)
+
+Once your frontend is deployed, you will get a URL like `https://match4action-web.vercel.app`.
+
+1.  Go back to your **Backend Project** on Vercel.
+2.  Update the **Environment Variable** `CLIENT_BASE_URL` to equal `https://match4action-web.vercel.app`.
+3.  **Redeploy** the Backend (Settings -> Deployments -> Redeploy) so it picks up the new variable.
+    *   *Why?* This ensures your Backend allows requests from your Frontend (CORS).
 
 ---
 
 ## Troubleshooting
 
-### Backend 404s
-If the backend returns 404s:
-*   Check `vercel.json` in the root of `match4action_api`. It handles rewriting requests to the `api` folder.
-*   Ensure `api/index.ts` correctly exports the Express app.
+### Frontend: Images/Content not loading
+*   Check your `CONTENTFUL_...` keys.
+*   Check browser console for 401/403 errors.
 
-### CORS Errors
-If the frontend cannot talk to the backend:
-*   Update the `cors` configuration in `match4action_api/src/app.ts` to include your new Vercel frontend domain (`https://your-frontend.vercel.app`).
-*   Redeploy the backend after updating the allowed origins.
+### Frontend: API Errors (Network Error / CORS)
+*   Check browser console. If you see CORS errors:
+    *   Ensure Backend `CLIENT_BASE_URL` matches Frontend URL exactly.
+    *   Ensure Frontend `NEXT_PUBLIC_API_PATH` matches Backend URL exactly.

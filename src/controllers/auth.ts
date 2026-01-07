@@ -15,23 +15,21 @@ import { LoginInput, LogoutInput, RegisterUserInput } from "../schemas/auth";
 import { doLogin } from "../service/auth";
 
 export const login = async (
-  req: Request <{}, {}, LoginInput["body"]>,
+  req: Request<{}, {}, LoginInput["body"]>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    
+
     const loginDone = await doLogin(req);
 
-    if (loginDone.success == false){
+    if (loginDone.success == false) {
       next(createError(404, "Login unsuccessfull"));
     }
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
-
     return res
-      .cookie("access_token", loginDone.access_token, { httpOnly: true, domain: origin })
-      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, domain: origin})
+      .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true })
       .status(200)
       .send({
         data: loginDone.data,
@@ -45,12 +43,12 @@ export const login = async (
 
 //TODO Move this code to service layer
 export const register = async (
-  req: Request <{}, {}, RegisterUserInput["body"]> ,
+  req: Request<{}, {}, RegisterUserInput["body"]>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    
+
     const newPassword = await hashPassword(req.body?.password);
 
     const newUser = await User.create({
@@ -89,11 +87,9 @@ export const register = async (
 
     newUser.password = undefined;
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
-
     return res
-      .cookie("access_token", access_token, { httpOnly: false , domain: origin})
-      .cookie("refresh_token", refresh_token, { httpOnly: false , domain: origin})
+      .cookie("access_token", access_token, { httpOnly: false, sameSite: "none", secure: true })
+      .cookie("refresh_token", refresh_token, { httpOnly: false, sameSite: "none", secure: true })
       .status(201)
       .send({
         data: newUser,
@@ -106,7 +102,7 @@ export const register = async (
 };
 
 export const logout = async (
-  req: Request  <{}, {}, LogoutInput["body"]>,
+  req: Request<{}, {}, LogoutInput["body"]>,
   res: Response,
   next: NextFunction
 ) => {
@@ -114,25 +110,23 @@ export const logout = async (
     const access_token = req?.cookies?.access_token;
     const decoded_token = jwt.decode(access_token);
 
-    if (typeof decoded_token == "object"){
+    if (typeof decoded_token == "object") {
       const id = decoded_token?._id;
-      const result = await UserToken.deleteMany({ userId: id});      
+      const result = await UserToken.deleteMany({ userId: id });
       console.log("Logout result count: " + result.deletedCount);
-    } else{
+    } else {
       return next(createError(500, "User not found."));
     }
-    
+
     req.logOut((err) => {
       if (err) {
         return next(err);
       }
     });
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
-
     return res
-      .clearCookie("access_token",  { httpOnly: true, domain: origin })
-      .clearCookie("refresh_token",  { httpOnly: true, domain: origin })
+      .clearCookie("access_token", { httpOnly: true, sameSite: "none", secure: true })
+      .clearCookie("refresh_token", { httpOnly: true, sameSite: "none", secure: true })
       .status(200)
       .send({
         success: true,
@@ -198,11 +192,9 @@ export const refreshToken = async (
       role: user.role!,
     });
 
-    var origin = req.get('origin')?.replace("https://", "").replace("http://","").replace(":3000", "");
-
     return res
-      .cookie("access_token", access_token, { httpOnly: true, domain: origin })
-      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, domain: origin})
+      .cookie("access_token", access_token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, sameSite: "none", secure: true })
       .status(201)
       .send({
         success: true,
