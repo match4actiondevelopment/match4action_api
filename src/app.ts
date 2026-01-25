@@ -33,7 +33,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// To see if this fixes fetching question cors error
+//attempt to fix the fetching questions cors issue
 app.use(cors({
   origin: [
     "https://match4action-web-snowy.vercel.app",
@@ -44,6 +44,7 @@ app.use(cors({
 }));
 
 app.options("*", cors());
+
 /*
 app.use(
   morgan("dev"),
