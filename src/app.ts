@@ -33,6 +33,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+//attempt to fix the fetching questions cors issue
+app.use(cors({
+  origin: [
+    "https://match4action-web-snowy.vercel.app",
+    "https://match4action-web.vercel.app",
+    "http://localhost:3000"
+  ],
+  credentials: true
+}));
+
+app.options("*", cors());
+
+/*
 app.use(
   morgan("dev"),
   // Manual CORS to guarantee headers
@@ -61,7 +74,7 @@ app.use(
     next();
   }
 );
-
+*/
 app.use(
   cookieSession({
     maxAge: 24 * 60 * 60 * 1000,
