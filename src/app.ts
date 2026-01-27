@@ -45,36 +45,6 @@ app.use(cors({
 
 app.options("*", cors());
 
-/*
-app.use(
-  morgan("dev"),
-  // Manual CORS to guarantee headers
-  (req, res, next) => {
-    const origin = req.headers.origin;
-    const allowedOrigins = [
-      "https://match4action-web-snowy.vercel.app",
-      "https://match4action-web.vercel.app",
-      "http://localhost:3000"
-    ];
-
-    if (origin && allowedOrigins.includes(origin as string)) {
-      res.setHeader("Access-Control-Allow-Origin", origin as string);
-    } else {
-      // Default fallback for direct testing or unknown origins (safe for now)
-      res.setHeader("Access-Control-Allow-Origin", "https://match4action-web-snowy.vercel.app");
-    }
-
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
-    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-
-    if (req.method === "OPTIONS") {
-      return res.status(200).end();
-    }
-    next();
-  }
-);
-*/
 app.use(
   cookieSession({
     maxAge: 24 * 60 * 60 * 1000,
