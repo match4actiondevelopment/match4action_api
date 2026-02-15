@@ -86,18 +86,19 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // MongoDB connection
-mongoose.set("strictQuery", false);
-console.log("Attempting to connect to MongoDB...");
-console.log("MONGO_URI is set:", !!MONGO_URI);
-if (MONGO_URI) {
-  console.log("MONGO_URI starts with:", MONGO_URI.substring(0, 15) + "...");
-} else {
-  console.error("CRITICAL: MONGO_URI is missing or empty.");
-}
+// MongoDB connection
+// mongoose.set("strictQuery", false);
+// console.log("Attempting to connect to MongoDB...");
+// console.log("MONGO_URI is set:", !!MONGO_URI);
+// if (MONGO_URI) {
+//   console.log("MONGO_URI starts with:", MONGO_URI.substring(0, 15) + "...");
+// } else {
+//   console.error("CRITICAL: MONGO_URI is missing or empty.");
+// }
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log("Connected to MongoDB successfully"))
-  .catch(err => console.error("MongoDB Connection Error:", err));
+// mongoose.connect(MONGO_URI)
+//   .then(() => console.log("Connected to MongoDB successfully"))
+//   .catch(err => console.error("MongoDB Connection Error:", err));
 
 // ------------------
 // Mount routes
@@ -132,9 +133,17 @@ app.all("*", (req, res, next) => {
 // Start server
 // Start server if not running in Vercel (or other serverless environment)
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`App listening on port: ${PORT}`);
-  });
+  const { MONGO_URI } = require("./utils/secrets");
+  const mongoose = require("mongoose");
+
+  mongoose.connect(MONGO_URI)
+    .then(() => {
+      console.log("Connected to MongoDB successfully");
+      app.listen(PORT, () => {
+        console.log(`App listening on port: ${PORT}`);
+      });
+    })
+    .catch((err: any) => console.error("MongoDB Connection Error:", err));
 }
 
 export default app;
