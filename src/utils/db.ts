@@ -28,7 +28,7 @@ async function connectToDatabase() {
             bufferCommands: false, // Disable buffering to fail fast if no connection
         };
 
-        cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
+        cached.promise = mongoose.connect(MONGO_URI as string, opts).then((mongoose) => {
             return mongoose;
         });
     }
