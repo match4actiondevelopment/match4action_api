@@ -34,7 +34,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 //attempt to fix the fetching questions cors issue
-app.use(cors({
+// CORS configuration
+const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -50,9 +51,10 @@ app.use(cors({
     }
   },
   credentials: true
-}));
+};
 
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 /*
 app.use(
