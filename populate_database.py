@@ -19,6 +19,7 @@ def hash_password(password):
 def connect_to_mongodb():
     """Connect to MongoDB"""
     mongo_uri = os.getenv('MONGO_URI') or os.getenv('MONGO_LOCAL') or 'mongodb://localhost:27017/match4action'
+    # mongo_uri = "mongodb+srv://match4action:DRa9HOr0t61HPlXM@cluster0.qlwst0x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
     try:
         client = MongoClient(mongo_uri)
         client.admin.command('ping')
