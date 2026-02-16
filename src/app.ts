@@ -34,12 +34,20 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 //attempt to fix the fetching questions cors issue
-app.use(cors({
-  origin: [
-    "https://match4action-web-snowy.vercel.app",
-    "https://match4action-web.vercel.app",
+origin: (origin, callback) => {
+  // Allow requests with no origin (like mobile apps or curl requests)
+  if (!origin) return callback(null, true);
+
+  const allowedOrigins = [
     "http://localhost:3000"
-  ],
+  ];
+
+  if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
+    return callback(null, true);
+  } else {
+    return callback(new Error("Not allowed by CORS"));
+  }
+},
   credentials: true
 }));
 
