@@ -8,7 +8,7 @@ import passport from "passport";
 import "./config/passport";
 
 // Existing routes
-import { auth, goals, initiatives, upload, users } from "./routes";
+import { about, auth, bloglinkRouter, goals, initiatives, upload, users } from "./routes";
 
 // Ikigai questions route
 import ikigaiQuestions from "./routes/ikigai-questions";
@@ -24,6 +24,9 @@ import { COOKIE_KEY, MONGO_URI, PORT } from "./utils/secrets";
 import swaggerDocs from "./swagger";
 
 const app = express();
+
+// Trust proxy for Vercel deployment so protocol and secure cookies work correctly
+app.set("trust proxy", 1);
 
 // Swagger
 swaggerDocs(app, PORT);
@@ -119,6 +122,8 @@ app.use("/users", users);
 app.use("/goals", goals);
 app.use("/initiatives", initiatives);
 app.use("/upload", upload);
+app.use("/about", about);
+app.use("/bloglink", bloglinkRouter);
 app.use("/ikigai-questions", ikigaiQuestions); // <-- FIXED: mounted before 404
 app.use("/ikigai-responses", ikigaiResponses);
 app.use("/matching", matching);

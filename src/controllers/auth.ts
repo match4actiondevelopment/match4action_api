@@ -14,6 +14,13 @@ import { CLIENT_BASE_URL } from "../utils/secrets";
 import { LoginInput, LogoutInput, RegisterUserInput } from "../schemas/auth";
 import { doLogin } from "../service/auth";
 
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+  secure: isProduction,
+};
+
 export const login = async (
   req: Request<{}, {}, LoginInput["body"]>,
   res: Response,
@@ -28,8 +35,8 @@ export const login = async (
     }
 
     return res
-      .cookie("access_token", loginDone.access_token, { httpOnly: true, sameSite: "none", secure: true })
-      .cookie("refresh_token", loginDone.refresh_token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("access_token", loginDone.access_token, cookieOptions)
+      .cookie("refresh_token", loginDone.refresh_token, cookieOptions)
       .status(200)
       .send({
         data: loginDone.data,
@@ -88,8 +95,8 @@ export const register = async (
     newUser.password = undefined;
 
     return res
-      .cookie("access_token", access_token, { httpOnly: false, sameSite: "none", secure: true })
-      .cookie("refresh_token", refresh_token, { httpOnly: false, sameSite: "none", secure: true })
+      .cookie("access_token", access_token, { ...cookieOptions, httpOnly: false })
+      .cookie("refresh_token", refresh_token, { ...cookieOptions, httpOnly: false })
       .status(201)
       .send({
         data: newUser,
@@ -125,8 +132,8 @@ export const logout = async (
     });
 
     return res
-      .clearCookie("access_token", { httpOnly: true, sameSite: "none", secure: true })
-      .clearCookie("refresh_token", { httpOnly: true, sameSite: "none", secure: true })
+      .clearCookie("access_token", cookieOptions)
+      .clearCookie("refresh_token", cookieOptions)
       .status(200)
       .send({
         success: true,
@@ -193,8 +200,8 @@ export const refreshToken = async (
     });
 
     return res
-      .cookie("access_token", access_token, { httpOnly: true, sameSite: "none", secure: true })
-      .cookie("refresh_token", refreshToken?.token, { httpOnly: true, sameSite: "none", secure: true })
+      .cookie("access_token", access_token, cookieOptions)
+      .cookie("refresh_token", refreshToken?.token, cookieOptions)
       .status(201)
       .send({
         success: true,
@@ -246,12 +253,8 @@ export const google = async (
     url.searchParams.set("user_id", user?._id);
 
     return res
-      .cookie("access_token", access_token, {
-        httpOnly: true,
-      })
-      .cookie("refresh_token", refresh_token, {
-        httpOnly: true,
-      })
+      .cookie("access_token", access_token, cookieOptions)
+      .cookie("refresh_token", refresh_token, cookieOptions)
       .redirect(url.toString());
   } catch (error) {
     return res.redirect(`${CLIENT_BASE_URL}/404`);
