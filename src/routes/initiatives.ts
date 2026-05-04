@@ -9,7 +9,7 @@ import {
   unsubscribe,
   update,
 } from "../controllers/initiatives";
-import { isLogged } from "../middleware/jwt";
+import { hasRoles, isLogged } from "../middleware/jwt";
 import { multerUpload } from "../middleware/multer";
 
 const router: Router = Router();
@@ -134,7 +134,7 @@ router.get("/", getAll);
    *            schema:
    *              $ref: '#/components/schemas/Initiative'
    */
-router.post("/", isLogged, multerUpload.single("file"), create);
+router.post("/", isLogged, hasRoles(['admin', 'organization']), multerUpload.single("file"), create);
 
 //TODO
 /**
@@ -152,10 +152,10 @@ router.post("/", isLogged, multerUpload.single("file"), create);
    *            schema:
    *              $ref: '#/components/schemas/InitiativesResponse'
    */
-router.delete("/:id", isLogged, remove);
+router.delete("/:id", isLogged, hasRoles(['admin', 'organization']), remove);
 
 //TODO
-router.put("/:id", isLogged, multerUpload.single("file"), update);
+router.put("/:id", isLogged, hasRoles(['admin', 'organization']), multerUpload.single("file"), update);
 
 /**
    * @openapi

@@ -101,3 +101,42 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     }
   );
 };
+
+export const hasRoles = (roles: (keyof typeof UserRole)[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const token = req?.cookies?.access_token;
+
+    if (!token || token === undefined) {
+      return next(createError(401, "Access Token not provided."));
+    }
+
+    jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
+      async (err: any, payload: any) => {
+        if (err instanceof TokenExpiredError) {
+          return next(createError(403, "Unauthorized! Access Token was expired."));
+        }
+
+        if (err instanceof NotBeforeError) {
+          return next(createError(403, "Jwt not active."));
+        }
+
+        if (err instanceof JsonWebTokenError) {
+          return next(createError(403, "Jwt malformed."));
+        }
+
+        // payload.role should be one of the enum values, mapping the enum correctly
+        // UserRole is an enum, its values at runtime are 'volunteer', 'admin', 'organization' because it's defined without assignment or with string assignment. 
+        // Wait, UserRole is: enum UserRole { 'volunteer', 'admin', 'organization' }
+        // Let's just check if payload.role is included.
+        if (!roles.includes(payload.role)) {
+          return next(createError(403, "Forbidden: insufficient permissions."));
+        }
+
+        req.user = payload;
+        next();
+      }
+    );
+  };
+};

@@ -157,7 +157,7 @@ def populate_users(db):
         {
             "name": "Admin User",
             "email": "admin@match4action.com",
-            "password": admin_pass,
+            "password": admin123,
             "role": "admin",
             "provider": {
                 "id": "local-admin",
