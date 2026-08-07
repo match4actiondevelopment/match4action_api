@@ -49,6 +49,21 @@ interface MatchingScore {
   reasons: string[];
 }
 
+export const MATCH_EXPLANATION_FALLBACK =
+  "This opportunity may align with your Ikigai profile.";
+
+export const getActiveInitiativesFilter = () => ({
+  $or: [
+    { status: "active" },
+    { status: { $exists: false } },
+  ],
+});
+
+export const ensureMatchingReasons = (reasons: string[]) =>
+  reasons.length > 0
+    ? reasons
+    : [MATCH_EXPLANATION_FALLBACK];
+
 export const getRecommendedInitiatives = async (
   req: Request,
   res: Response,
@@ -74,7 +89,9 @@ export const getRecommendedInitiatives = async (
     }
 
     // Get all initiatives
-    const initiatives = await Initiative.find()
+    const initiatives = await Initiative.find(
+      getActiveInitiativesFilter()
+    )
       .populate('userId', 'name email')
       .populate('goals', 'name');
 
@@ -137,7 +154,7 @@ export const getRecommendedInitiatives = async (
       return {
         ...initiative?.toObject(),
         matchingScore: score.score,
-        matchingReasons: score.reasons
+        matchingReasons: ensureMatchingReasons(score.reasons)
       };
     });
 

@@ -1,6 +1,7 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose";
 
 export type InitiativeDocument = Document & {
+  status?: "active" | "inactive" | "closed";
   eventItemFrame: string;
   eventItemType: string;
   initiativeName: string;
@@ -46,6 +47,12 @@ const initiativeSchema = new Schema<InitiativeDocument>(
     initiativeName: {
       type: String,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "closed"],
+      default: "active",
+      index: true,
     },
     whatMovesThisInitiative: [
       {

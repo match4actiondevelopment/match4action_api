@@ -368,6 +368,8 @@ export const update = async (
       req.body.eventItemType ?? initiative?.eventItemType;
     updateInitiative.initiativeName =
       req.body.initiativeName ?? initiative?.initiativeName;
+    updateInitiative.status =
+      req.body.status ?? initiative?.status;
     updateInitiative.description =
       req.body.description ?? initiative?.description;
     updateInitiative.startDate = req.body.startDate ?? initiative?.startDate;
@@ -380,6 +382,7 @@ export const update = async (
       {
         upsert: true,
         returnOriginal: false,
+        runValidators: true,
       }
     );
 
