@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  apply,
   create,
   getAll,
   getInitiativesByUser,
@@ -47,6 +48,13 @@ router.get("/user", isLogged, getInitiativesByUser);
    *              $ref: '#/components/schemas/InitiativeResponse'
    */
 router.patch("/subscribe/:id", isLogged, subscribe);
+
+router.patch(
+  "/apply/:id",
+  isLogged,
+  hasRoles(["volunteer"]),
+  apply
+);
 
 /**
    * @openapi

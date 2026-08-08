@@ -269,6 +269,65 @@ export const subscribe = async (
   }
 };
 
+export const apply = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return next(createError(400, "Invalid initiative id."));
+    }
+
+    const initiativeId = new mongoose.Types.ObjectId(req.params.id);
+    const applicantId = req.user?._id;
+
+    if (!applicantId) {
+      return next(createError(401, "Authentication is required to apply."));
+    }
+
+    const updatedInitiative = await Initiative.findOneAndUpdate(
+      {
+        _id: initiativeId,
+        $or: [
+          { status: "active" },
+          { status: { $exists: false } },
+        ],
+      },
+      { $addToSet: { applicants: applicantId } },
+      {
+        returnOriginal: false,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedInitiative) {
+      const initiative = await Initiative.findById(initiativeId).select(
+        "status"
+      );
+
+      if (!initiative) {
+        return next(createError(404, "Initiative not found."));
+      }
+
+      return next(
+        createError(409, "This initiative is not accepting applications.")
+      );
+    }
+
+    return res.status(200).json({
+      data: {
+        initiativeId: updatedInitiative._id,
+        applied: true,
+      },
+      success: true,
+      message: "Application submitted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const unsubscribe = async (
   req: Request,
   res: Response,
