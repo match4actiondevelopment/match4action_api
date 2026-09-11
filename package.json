@@ -9,7 +9,8 @@
     "test": "npx jest",
     "build:ts": "tsc -p .",
     "build": "echo 'Build skipped for Vercel serverless'",
-    "vercel-build": "echo hello"
+    "vercel-build": "echo hello",
+    "test:epic3": "jest --runInBand src/__tests__/applications.unit.test.js src/__tests__/applications.test.js"
   },
   "keywords": [],
   "author": "",
@@ -53,5 +54,8 @@
     "nodemon": "^2.0.13",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4"
   }
 }

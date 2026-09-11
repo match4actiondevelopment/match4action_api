@@ -1,65 +1,84 @@
-import { NextFunction, Request, Response } from "express";
+import {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 import mongoose from "mongoose";
 import { uploadBusiness } from "../service/upload";
-import { Initiative, InitiativeDocument } from "../models/Initiatives";
+import { Initiative } from "../models/Initiatives";
 import { createError } from "../utils/createError";
-import { type } from "os";
 
 export const getAll = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  
-  console.log('meu dir:' + __dirname);
-
   try {
-    // Extract location filter parameters from query string
-    const { country, city, location, search, q } = req.query;
-    
-    // Build filter object
+    const {
+      country,
+      city,
+      location,
+      search,
+      q,
+    } = req.query;
+
     const filter: any = {};
-    
-    // Support both explicit country/city params and a general location param
+
     if (country || city) {
       filter.location = {};
+
       if (country) {
-        // Case-insensitive partial match for country
-        filter.location.country = { $regex: country as string, $options: 'i' };
+        filter.location.country = {
+          $regex: country as string,
+          $options: "i",
+        };
       }
+
       if (city) {
-        // Case-insensitive partial match for city
-        filter.location.city = { $regex: city as string, $options: 'i' };
+        filter.location.city = {
+          $regex: city as string,
+          $options: "i",
+        };
       }
     } else if (location) {
-      // If only a general location is provided, search in both city and country
-      const locationRegex = { $regex: location as string, $options: 'i' };
+      const locationRegex = {
+        $regex: location as string,
+        $options: "i",
+      };
+
       filter.$or = [
-        { 'location.city': locationRegex },
-        { 'location.country': locationRegex }
+        { "location.city": locationRegex },
+        { "location.country": locationRegex },
       ];
     }
 
-    // Search functionality - search in multiple fields
     const searchQuery = search || q;
+
     if (searchQuery) {
-      const searchRegex = { $regex: searchQuery as string, $options: 'i' };
+      const searchRegex = {
+        $regex: searchQuery as string,
+        $options: "i",
+      };
+
       const searchConditions: any[] = [
         { initiativeName: searchRegex },
         { description: searchRegex },
-        { 'servicesNeeded': searchRegex },
-        { 'whatMovesThisInitiative': searchRegex },
-        { 'whichAreasAreCoveredByThisInitiative': searchRegex }
+        { servicesNeeded: searchRegex },
+        { whatMovesThisInitiative: searchRegex },
+        { whichAreasAreCoveredByThisInitiative: searchRegex },
       ];
 
-      // If we already have location filters, combine with $and
       if (filter.$or || filter.location) {
         filter.$and = [
-          ...(filter.$or ? [{ $or: filter.$or }] : []),
-          ...(filter.location ? [{ location: filter.location }] : []),
-          { $or: searchConditions }
+          ...(filter.$or
+            ? [{ $or: filter.$or }]
+            : []),
+          ...(filter.location
+            ? [{ location: filter.location }]
+            : []),
+          { $or: searchConditions },
         ];
-        // Clear the old filters since we're using $and now
+
         delete filter.$or;
         delete filter.location;
       } else {
@@ -85,12 +104,16 @@ export const getOne = async (
   next: NextFunction
 ) => {
   try {
-    const initiative = await Initiative.findById(req?.params?.id)
+    const initiative = await Initiative.findById(
+      req?.params?.id
+    )
       .populate("goals", "name image")
       .populate("userId", "name");
 
     if (!initiative) {
-      return next(createError(404, "Initiative not found."));
+      return next(
+        createError(404, "Initiative not found.")
+      );
     }
 
     return res.status(200).send({
@@ -109,7 +132,9 @@ export const getInitiativesByUser = async (
   next: NextFunction
 ) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req?.user?._id);
+    const userId = new mongoose.Types.ObjectId(
+      req?.user?._id
+    );
 
     const initiatives = await Initiative.find({
       applicants: userId,
@@ -118,7 +143,9 @@ export const getInitiativesByUser = async (
       .populate("userId", "name");
 
     if (!initiatives) {
-      return next(createError(404, "User initiatives not found."));
+      return next(
+        createError(404, "User initiatives not found.")
+      );
     }
 
     return res.status(200).send({
@@ -137,58 +164,52 @@ export const create = async (
   next: NextFunction
 ) => {
   try {
-    const raw = JSON.parse(JSON.stringify(req.body));
-    console.log(raw);
-
     const endTime = new Date();
     const startTime = new Date();
-    /*const [endTimeHour, endTimeMinutes] = req?.body?.endTime.split(":");
-    endTime.setHours(endTimeHour);
-    endTime.setMinutes(endTimeMinutes);
-
-    const startTime = new Date();
-    const [startTimeHour, startTimeMinutes] = req?.body?.startTime.split(":");
-    startTime.setHours(startTimeHour);
-    startTime.setMinutes(startTimeMinutes);*/
 
     let image = null;
 
     if (req?.file) {
       const uploadResponse = await uploadBusiness({
-        file: req?.file,
+        file: req.file,
         folderName: req?.body?.folderName,
       });
 
       if (!uploadResponse?.success) {
-        return next(createError(404, "Error uploading image."));
-      } else {
-        image = uploadResponse?.url;
+        return next(
+          createError(404, "Error uploading image.")
+        );
       }
+
+      image = uploadResponse.url;
     }
 
-    console.log('passei')
     const initiative = new Initiative({
       ...req.body,
       startTime,
       endTime,
-      image: [image] ?? null,
+      image: [image],
       userId: req?.user?._id,
-      whatMovesThisInitiative: req.body.whatMovesThisInitiative,
+      whatMovesThisInitiative:
+        req.body.whatMovesThisInitiative,
       servicesNeeded: req.body.servicesNeeded,
-      whichAreasAreCoveredByThisInitiative: req.body.whichAreasAreCoveredByThisInitiative,
+      whichAreasAreCoveredByThisInitiative:
+        req.body.whichAreasAreCoveredByThisInitiative,
       location: {
         country: req.body.location.country,
-        city: req.body.location.city
-      }
+        city: req.body.location.city,
+      },
     });
 
-    console.log('passei 2')
     const { _id } = await initiative.save();
 
-    const createdInitiative = await Initiative.findById(_id);
+    const createdInitiative =
+      await Initiative.findById(_id);
 
     if (!createdInitiative) {
-      return next(createError(404, "Initiative not created."));
+      return next(
+        createError(404, "Initiative not created.")
+      );
     }
 
     return res.status(201).send({
@@ -207,19 +228,33 @@ export const remove = async (
   next: NextFunction
 ) => {
   try {
-    const objectId = new mongoose.Types.ObjectId(req.params.id);
+    const objectId = new mongoose.Types.ObjectId(
+      req.params.id
+    );
 
-    const initiative = await Initiative.findById(objectId);
+    const initiative =
+      await Initiative.findById(objectId);
 
     if (!initiative) {
-      return next(createError(404, "Initiative not found."));
+      return next(
+        createError(404, "Initiative not found.")
+      );
     }
 
-    if (req?.user?._id !== initiative?.userId?.toString()) {
-      return next(createError(403, "You can delete only your initiatives."));
+    if (
+      req?.user?._id !==
+      initiative?.userId?.toString()
+    ) {
+      return next(
+        createError(
+          403,
+          "You can delete only your initiatives."
+        )
+      );
     }
 
-    const deletedInitiative = await Initiative.findOneAndDelete(objectId);
+    const deletedInitiative =
+      await Initiative.findOneAndDelete(objectId);
 
     return res.status(200).json({
       success: !!deletedInitiative,
@@ -230,140 +265,9 @@ export const remove = async (
   }
 };
 
-export const subscribe = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const id = new mongoose.Types.ObjectId(req?.params?.id);
-
-    const initiative = await Initiative.findById(id);
-
-    if (!initiative) {
-      return next(createError(404, "Initiative not found."));
-    }
-
-    const updateInitiative = new Initiative(initiative);
-
-    const updatedInitiative = await Initiative.findByIdAndUpdate(
-      id,
-      {$addToSet: {applicants:  req?.user?._id}},
-      {
-        upsert: true,
-        returnOriginal: false,
-      }
-    );
-
-    if (!updatedInitiative) {
-      return next(createError(404, "Initiative subscription not updated."));
-    }
-
-    return res.status(200).json({
-      data: updatedInitiative,
-      success: true,
-      message: "Initiative subscription successfully updated",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const apply = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return next(createError(400, "Invalid initiative id."));
-    }
-
-    const initiativeId = new mongoose.Types.ObjectId(req.params.id);
-    const applicantId = req.user?._id;
-
-    if (!applicantId) {
-      return next(createError(401, "Authentication is required to apply."));
-    }
-
-    const updatedInitiative = await Initiative.findOneAndUpdate(
-      {
-        _id: initiativeId,
-        $or: [
-          { status: "active" },
-          { status: { $exists: false } },
-        ],
-      },
-      { $addToSet: { applicants: applicantId } },
-      {
-        returnOriginal: false,
-        runValidators: true,
-      }
-    );
-
-    if (!updatedInitiative) {
-      const initiative = await Initiative.findById(initiativeId).select(
-        "status"
-      );
-
-      if (!initiative) {
-        return next(createError(404, "Initiative not found."));
-      }
-
-      return next(
-        createError(409, "This initiative is not accepting applications.")
-      );
-    }
-
-    return res.status(200).json({
-      data: {
-        initiativeId: updatedInitiative._id,
-        applied: true,
-      },
-      success: true,
-      message: "Application submitted successfully.",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const unsubscribe = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const id = new mongoose.Types.ObjectId(req?.params?.id);
-
-    const initiative = await Initiative.findById(id);
-
-    if (!initiative) {
-      return next(createError(404, "Initiative not found."));
-    }
-
-    const updatedInitiative = await Initiative.findByIdAndUpdate(
-      id,
-      { $pull: { applicants: req?.user?._id } },
-      {
-        upsert: true,
-        returnOriginal: false,
-      }
-    );
-
-    if (!updatedInitiative) {
-      return next(createError(404, "Initiative unsubscription not updated."));
-    }
-
-    return res.status(200).json({
-      data: updatedInitiative,
-      success: true,
-      message: "Initiative unsubscription successfully updated",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+// Keep the existing exported Apply controller name.
+// Application persistence now lives in its own controller/service.
+export { apply } from "./applications";
 
 export const update = async (
   req: Request,
@@ -371,20 +275,37 @@ export const update = async (
   next: NextFunction
 ) => {
   try {
-    const id = new mongoose.Types.ObjectId(req?.params?.id);
+    const id = new mongoose.Types.ObjectId(
+      req?.params?.id
+    );
+
     const initiative = await Initiative.findById(id);
 
-    if (req?.user?._id !== initiative?.userId?.toString()) {
-      return next(createError(403, "You can update only your initiatives."));
+    if (
+      req?.user?._id !==
+      initiative?.userId?.toString()
+    ) {
+      return next(
+        createError(
+          403,
+          "You can update only your initiatives."
+        )
+      );
     }
 
     const endTime = new Date();
-    const [endTimeHour, endTimeMinutes] = req?.body?.endTime?.split(":");
+
+    const [endTimeHour, endTimeMinutes] =
+      req?.body?.endTime?.split(":");
+
     endTime.setHours(endTimeHour);
     endTime.setMinutes(endTimeMinutes);
 
     const startTime = new Date();
-    const [startTimeHour, startTimeMinutes] = req?.body?.startTime?.split(":");
+
+    const [startTimeHour, startTimeMinutes] =
+      req?.body?.startTime?.split(":");
+
     startTime.setHours(startTimeHour);
     startTime.setMinutes(startTimeMinutes);
 
@@ -392,61 +313,108 @@ export const update = async (
 
     if (req?.file) {
       const uploadResponse = await uploadBusiness({
-        file: req?.file,
+        file: req.file,
         folderName: req?.body?.folderName,
       });
 
       if (!uploadResponse?.success) {
-        return next(createError(404, "Error uploading image."));
-      } else {
-        image = uploadResponse?.url;
+        return next(
+          createError(404, "Error uploading image.")
+        );
       }
+
+      image = uploadResponse.url;
     }
 
-    const updateInitiative = new Initiative(initiative);
+    const updateInitiative =
+      new Initiative(initiative);
 
-    updateInitiative.endTime = endTime ?? initiative?.endTime;
-    updateInitiative.startTime = startTime ?? initiative?.startTime;
-    updateInitiative.goals = JSON.parse(req.body.goals) ?? initiative?.endTime;
+    updateInitiative.endTime =
+      endTime ?? initiative?.endTime;
+
+    updateInitiative.startTime =
+      startTime ?? initiative?.startTime;
+
+    updateInitiative.goals =
+      JSON.parse(req.body.goals) ??
+      initiative?.endTime;
+
     updateInitiative.location =
-      JSON.parse(req.body.location) ?? initiative?.location;
+      JSON.parse(req.body.location) ??
+      initiative?.location;
+
     updateInitiative.servicesNeeded =
-      JSON.parse(req.body.servicesNeeded) ?? initiative?.servicesNeeded;
+      JSON.parse(req.body.servicesNeeded) ??
+      initiative?.servicesNeeded;
+
     updateInitiative.whatMovesThisInitiative =
       JSON.parse(req.body.whatMovesThisInitiative) ??
       initiative?.whatMovesThisInitiative;
+
     updateInitiative.whichAreasAreCoveredByThisInitiative =
-      JSON.parse(req.body.whichAreasAreCoveredByThisInitiative) ??
+      JSON.parse(
+        req.body.whichAreasAreCoveredByThisInitiative
+      ) ??
       initiative?.whichAreasAreCoveredByThisInitiative;
-    updateInitiative.image = ([image] as string[]) ?? initiative?.image;
-    updateInitiative.website = req.body.website ?? initiative?.website;
-    updateInitiative.applicants = initiative?.applicants ?? [];
+
+    updateInitiative.image =
+      ([image] as string[]) ?? initiative?.image;
+
+    updateInitiative.website =
+      req.body.website ?? initiative?.website;
+
     updateInitiative.eventItemFrame =
-      req.body.eventItemFrame ?? initiative?.eventItemFrame;
+      req.body.eventItemFrame ??
+      initiative?.eventItemFrame;
+
     updateInitiative.eventItemType =
-      req.body.eventItemType ?? initiative?.eventItemType;
+      req.body.eventItemType ??
+      initiative?.eventItemType;
+
     updateInitiative.initiativeName =
-      req.body.initiativeName ?? initiative?.initiativeName;
+      req.body.initiativeName ??
+      initiative?.initiativeName;
+
     updateInitiative.status =
       req.body.status ?? initiative?.status;
+
     updateInitiative.description =
       req.body.description ?? initiative?.description;
-    updateInitiative.startDate = req.body.startDate ?? initiative?.startDate;
-    updateInitiative.endDate = req.body.endDate ?? initiative?.endDate;
-    updateInitiative.postalCode = req.body.postalCode ?? initiative?.postalCode;
 
-    const updatedInitiative = await Initiative.findByIdAndUpdate(
-      id,
-      updateInitiative,
-      {
-        upsert: true,
-        returnOriginal: false,
-        runValidators: true,
-      }
-    );
+    updateInitiative.startDate =
+      req.body.startDate ?? initiative?.startDate;
+
+    updateInitiative.endDate =
+      req.body.endDate ?? initiative?.endDate;
+
+    updateInitiative.postalCode =
+      req.body.postalCode ?? initiative?.postalCode;
+
+    // An initiative edit must not overwrite an applicant
+    // list that changed after the initiative was loaded.
+    const {
+      applicants,
+      _id,
+      ...fieldsToUpdate
+    } = updateInitiative.toObject();
+
+    const updatedInitiative =
+      await Initiative.findByIdAndUpdate(
+        id,
+        {
+          $set: fieldsToUpdate,
+        },
+        {
+          upsert: true,
+          returnOriginal: false,
+          runValidators: true,
+        }
+      );
 
     if (!updatedInitiative) {
-      return next(createError(404, "Initiative not updated."));
+      return next(
+        createError(404, "Initiative not updated.")
+      );
     }
 
     return res.status(200).send({
