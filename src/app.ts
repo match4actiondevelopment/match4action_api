@@ -1,94 +1,81 @@
 import cookieParser from "cookie-parser";
 import cookieSession from "cookie-session";
 import cors from "cors";
-import express, { NextFunction, Request, Response } from "express";
+import express, {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 import mongoose from "mongoose";
-import morgan from "morgan";
 import passport from "passport";
 import "./config/passport";
 
-// Existing routes
-import { about, auth, bloglinkRouter, goals, initiatives, upload, users } from "./routes";
+import {
+  about,
+  auth,
+  bloglinkRouter,
+  goals,
+  initiatives,
+  upload,
+  users,
+} from "./routes";
 
-// Ikigai questions route
 import ikigaiQuestions from "./routes/ikigai-questions";
-
-// Matching route
 import matching from "./routes/matching";
-
-// Ikigai responses route
 import ikigaiResponses from "./routes/ikigai-responses";
+import notifications from "./routes/notifications";
 
 import { ErrorWithStatus } from "./utils/createError";
-import { COOKIE_KEY, MONGO_URI, PORT } from "./utils/secrets";
+import {
+  COOKIE_KEY,
+  MONGO_URI,
+  PORT,
+} from "./utils/secrets";
 import swaggerDocs from "./swagger";
 
 const app = express();
 
-// Trust proxy for Vercel deployment so protocol and secure cookies work correctly
 app.set("trust proxy", 1);
 
-// Swagger
 swaggerDocs(app, PORT);
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-//attempt to fix the fetching questions cors issue
-// CORS configuration
 const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+  origin: (
+    origin: string | undefined,
+    callback: (
+      err: Error | null,
+      allow?: boolean
+    ) => void
+  ) => {
+    if (!origin) {
+      return callback(null, true);
+    }
 
     const allowedOrigins = [
-      "http://localhost:3000"
+      "http://localhost:3000",
     ];
 
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
+    if (
+      allowedOrigins.indexOf(origin) !== -1 ||
+      origin.endsWith(".vercel.app")
+    ) {
       return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
     }
+
+    return callback(
+      new Error("Not allowed by CORS")
+    );
   },
-  credentials: true
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-/*
-app.use(
-  morgan("dev"),
-  // Manual CORS to guarantee headers
-  (req, res, next) => {
-    const origin = req.headers.origin;
-    const allowedOrigins = [
-      "https://match4action-web-snowy.vercel.app",
-      "https://match4action-web.vercel.app",
-      "http://localhost:3000"
-    ];
-
-    if (origin && allowedOrigins.includes(origin as string)) {
-      res.setHeader("Access-Control-Allow-Origin", origin as string);
-    } else {
-      // Default fallback for direct testing or unknown origins (safe for now)
-      res.setHeader("Access-Control-Allow-Origin", "https://match4action-web-snowy.vercel.app");
-    }
-
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
-    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-
-    if (req.method === "OPTIONS") {
-      return res.status(200).end();
-    }
-    next();
-  }
-);
-*/
 app.use(
   cookieSession({
     maxAge: 24 * 60 * 60 * 1000,
@@ -99,24 +86,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// MongoDB connection
-// MongoDB connection
-// mongoose.set("strictQuery", false);
-// console.log("Attempting to connect to MongoDB...");
-// console.log("MONGO_URI is set:", !!MONGO_URI);
-// if (MONGO_URI) {
-//   console.log("MONGO_URI starts with:", MONGO_URI.substring(0, 15) + "...");
-// } else {
-//   console.error("CRITICAL: MONGO_URI is missing or empty.");
-// }
-
-// mongoose.connect(MONGO_URI)
-//   .then(() => console.log("Connected to MongoDB successfully"))
-//   .catch(err => console.error("MongoDB Connection Error:", err));
-
-// ------------------
-// Mount routes
-// ------------------
 app.use("/auth", auth);
 app.use("/users", users);
 app.use("/goals", goals);
@@ -124,42 +93,61 @@ app.use("/initiatives", initiatives);
 app.use("/upload", upload);
 app.use("/about", about);
 app.use("/bloglink", bloglinkRouter);
-app.use("/ikigai-questions", ikigaiQuestions); // <-- FIXED: mounted before 404
+app.use("/ikigai-questions", ikigaiQuestions);
 app.use("/ikigai-responses", ikigaiResponses);
 app.use("/matching", matching);
+app.use("/notifications", notifications);
 
-// ------------------
-// Error handling
-// ------------------
 app.use(
-  (err: ErrorWithStatus, req: Request, res: Response, next: NextFunction) => {
+  (
+    err: ErrorWithStatus,
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
     const errorStatus = err.status || 500;
-    const errorMessage = err.message || "Something went wrong.";
-    return res.status(errorStatus).send({ success: false, message: errorMessage });
+    const errorMessage =
+      err.message || "Something went wrong.";
+
+    return res.status(errorStatus).send({
+      success: false,
+      message: errorMessage,
+    });
   }
 );
 
-// 404 handler
 app.all("*", (req, res, next) => {
-  const err = new Error(`Route ${req.originalUrl} not found.`) as ErrorWithStatus;
+  const err = new Error(
+    `Route ${req.originalUrl} not found.`
+  ) as ErrorWithStatus;
+
   err.status = 404;
   next(err);
 });
 
-// Start server
-// Start server if not running in Vercel (or other serverless environment)
 if (require.main === module) {
-  const { MONGO_URI } = require("./utils/secrets");
-  const mongoose = require("mongoose");
-
-  mongoose.connect(MONGO_URI)
+  if (!MONGO_URI) {
+    throw new Error("MongoDB connection string is not configured.");
+  }
+  mongoose
+    .connect(MONGO_URI)
     .then(() => {
-      console.log("Connected to MongoDB successfully");
+      console.log(
+        "Connected to MongoDB successfully"
+      );
+
       app.listen(PORT, () => {
-        console.log(`App listening on port: ${PORT}`);
+        console.log(
+          `App listening on port: ${PORT}`
+        );
       });
     })
-    .catch((err: any) => console.error("MongoDB Connection Error:", err));
+    .catch((err: any) => {
+      console.error(
+        "MongoDB Connection Error:",
+        err
+      );
+    });
 }
 
 export default app;

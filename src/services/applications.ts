@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 import { Application } from "../models/Application";
 import { Initiative } from "../models/Initiatives";
 import { User } from "../models/User";
+import { Notification } from "../models/Notification";
 import { createError } from "../utils/createError";
+import { dispatchNotification } from "./notifications";
 
 const alreadyApplied = () =>
   createError(
@@ -18,8 +20,10 @@ export async function createApplication(
     throw createError(400, "Invalid initiative id.");
   }
 
-  // Finish collection/index initialization before the transaction.
-  await Application.init();
+  await Promise.all([
+    Application.init(),
+    Notification.init(),
+  ]);
 
   let result: any;
 
@@ -33,16 +37,17 @@ export async function createApplication(
         throw createError(404, "Initiative not found.");
       }
 
-      const existingApplication = await Application.exists({
+      const existing = await Application.exists({
         userId,
         initiativeId,
       }).session(session);
 
-      const isLegacyApplicant = initiative.applicants.some(
-        (id) => String(id) === userId
-      );
+      const isLegacyApplicant =
+        initiative.applicants.some(
+          (id) => String(id) === userId
+        );
 
-      if (existingApplication || isLegacyApplicant) {
+      if (existing || isLegacyApplicant) {
         throw alreadyApplied();
       }
 
@@ -56,8 +61,6 @@ export async function createApplication(
         );
       }
 
-      // Keep the existing applicants array compatible.
-      // This write and application creation commit together.
       const updated = await Initiative.updateOne(
         {
           _id: initiativeId,
@@ -70,7 +73,9 @@ export async function createApplication(
           },
         },
         {
-          $addToSet: { applicants: userId },
+          $addToSet: {
+            applicants: userId,
+          },
         },
         {
           session,
@@ -85,7 +90,9 @@ export async function createApplication(
         );
       }
 
-      const owner = await User.findById(initiative.userId)
+      const owner = await User.findById(
+        initiative.userId
+      )
         .select("name")
         .session(session);
 
@@ -107,6 +114,25 @@ export async function createApplication(
         { session }
       );
 
+      const volunteer = await User.findById(userId)
+        .select("name email")
+        .session(session);
+
+      await Notification.create(
+        [
+          {
+            applicationId: application._id,
+            organisationId: initiative.userId,
+            initiativeId: initiative._id,
+            roleName: application.roleName,
+            volunteerName: volunteer?.name || "",
+            volunteerEmail: volunteer?.email || "",
+            appliedAt: application.appliedAt,
+          },
+        ],
+        { session }
+      );
+
       result = {
         applicationId: application._id,
         initiativeId,
@@ -123,6 +149,22 @@ export async function createApplication(
       throw error;
     });
 
+  // Application is committed. Notification errors must not
+  // turn this successful application into a failed response.
+  try {
+    result.notificationStatus =
+      await dispatchNotification(
+        String(result.applicationId)
+      );
+  } catch {
+    console.error(
+      "Notification processing needs review for application",
+      String(result.applicationId)
+    );
+
+    result.notificationStatus = "pending";
+  }
+
   return result;
 }
 
@@ -131,15 +173,13 @@ export async function listApplications(userId: string) {
     .sort({ appliedAt: -1 })
     .lean();
 
-  const knownInitiativeIds = applications.map(
+  const known = applications.map(
     (application) => application.initiativeId
   );
 
-  // Read old applications without changing their records
-  // or inventing an application date.
-  const legacyInitiatives = await Initiative.find({
+  const legacy = await Initiative.find({
     applicants: userId,
-    _id: { $nin: knownInitiativeIds },
+    _id: { $nin: known },
   })
     .select("initiativeName userId")
     .populate("userId", "name")
@@ -156,7 +196,7 @@ export async function listApplications(userId: string) {
       legacy: false,
     })),
 
-    ...legacyInitiatives.map((initiative) => ({
+    ...legacy.map((initiative) => ({
       applicationId: `legacy-${initiative._id}`,
       initiativeId: String(initiative._id),
       roleName: initiative.initiativeName,
