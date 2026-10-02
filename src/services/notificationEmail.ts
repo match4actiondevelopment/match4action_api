@@ -8,16 +8,17 @@ export type EmailPayload = {
   text: string;
 };
 
-const emails = z.array(z.string().email()).min(1).max(10);
-
-export function prepareEmail(record: {
-  organisationId: unknown;
-  initiativeId: unknown;
-  volunteerName: string;
-  volunteerEmail: string;
-  roleName: string;
-  appliedAt: Date;
-}) {
+export function prepareEmail(
+  record: {
+    organisationId: unknown;
+    initiativeId: unknown;
+    volunteerName: string;
+    volunteerEmail: string;
+    roleName: string;
+    appliedAt: Date;
+  },
+  ownerEmail: unknown
+) {
   const mode = process.env.EMAIL_MODE;
 
   if (mode !== "test" && mode !== "live") {
@@ -42,25 +43,13 @@ export function prepareEmail(record: {
     throw new Error("INVALID_SENDER");
   }
 
-  let mapping: any;
+  const recipient = z.string().trim().email().safeParse(ownerEmail);
 
-  try {
-    mapping = JSON.parse(
-      process.env.ORG_NOTIFICATION_EMAILS || "{}"
-    );
-  } catch {
-    throw new Error("INVALID_RECIPIENT_CONFIGURATION");
+  if (!recipient.success) {
+    throw new Error("MISSING_OR_INVALID_OWNER_EMAIL");
   }
 
-  const recipients = emails.safeParse(
-    mapping?.[String(record.organisationId)]
-  );
-
-  if (!recipients.success) {
-    throw new Error(
-      "MISSING_OR_INVALID_ORGANISATION_RECIPIENT"
-    );
-  }
+  const intendedRecipients = [recipient.data];
 
   if (
     !record.volunteerName ||
@@ -69,8 +58,7 @@ export function prepareEmail(record: {
     throw new Error("MISSING_VOLUNTEER_DETAILS");
   }
 
-  const testRecipient =
-    process.env.EMAIL_TEST_TO?.trim() || "";
+  const testRecipient = process.env.EMAIL_TEST_TO?.trim() || "";
 
   if (
     mode === "test" &&
@@ -79,9 +67,7 @@ export function prepareEmail(record: {
     throw new Error("INVALID_TEST_RECIPIENT");
   }
 
-  const base = new URL(
-    process.env.NOTIFICATION_WEB_URL || ""
-  );
+  const base = new URL(process.env.NOTIFICATION_WEB_URL || "");
 
   if (
     base.protocol !== "https:" ||
@@ -102,10 +88,7 @@ export function prepareEmail(record: {
 
   const payload: EmailPayload = {
     from,
-    to:
-      mode === "test"
-        ? [testRecipient]
-        : Array.from(new Set(recipients.data)),
+    to: mode === "test" ? [testRecipient] : intendedRecipients,
     subject: `${
       mode === "test" ? "[STAGING TEST] " : ""
     }New volunteer application for ${title}`,
@@ -123,7 +106,7 @@ export function prepareEmail(record: {
 
   return {
     mode,
-    intendedRecipients: recipients.data,
+    intendedRecipients,
     payload,
   };
 }
@@ -184,9 +167,7 @@ export function sendEmail(
 
             resolve(parsed.id);
           } catch {
-            reject(
-              new Error("INVALID_EMAIL_PROVIDER_RESPONSE")
-            );
+            reject(new Error("INVALID_EMAIL_PROVIDER_RESPONSE"));
           }
         });
       }

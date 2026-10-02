@@ -3,15 +3,11 @@ jest.mock("../service/upload", () => ({
 }));
 
 jest.mock("../services/notificationEmail", () => ({
-  ...jest.requireActual(
-    "../services/notificationEmail"
-  ),
+  ...jest.requireActual("../services/notificationEmail"),
   sendEmail: jest.fn(),
 }));
 
-const {
-  MongoMemoryReplSet,
-} = require("mongodb-memory-server");
+const { MongoMemoryReplSet } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
 const express = require("express");
 const cookieParser = require("cookie-parser");
@@ -19,26 +15,13 @@ const jwt = require("jsonwebtoken");
 const request = require("supertest");
 
 const { User } = require("../models/User");
-const {
-  Initiative,
-} = require("../models/Initiatives");
-const {
-  Application,
-} = require("../models/Application");
-const {
-  Notification,
-} = require("../models/Notification");
-const {
-  createApplication,
-} = require("../services/applications");
-const {
-  dispatchNotification,
-} = require("../services/notifications");
-const {
-  sendEmail,
-} = require("../services/notificationEmail");
-const notifications =
-  require("../routes/notifications").default;
+const { Initiative } = require("../models/Initiatives");
+const { Application } = require("../models/Application");
+const { Notification } = require("../models/Notification");
+const { createApplication } = require("../services/applications");
+const { dispatchNotification } = require("../services/notifications");
+const { sendEmail } = require("../services/notificationEmail");
+const notifications = require("../routes/notifications").default;
 
 jest.setTimeout(120000);
 
@@ -50,10 +33,7 @@ let admin;
 let role;
 
 const apply = () =>
-  createApplication(
-    String(volunteer),
-    String(role._id)
-  );
+  createApplication(String(volunteer), String(role._id));
 
 const cookie = (id, role = "admin") =>
   `access_token=${jwt.sign(
@@ -62,8 +42,7 @@ const cookie = (id, role = "admin") =>
   )}`;
 
 beforeAll(async () => {
-  process.env.ACCESS_TOKEN_PRIVATE_KEY =
-    "epic4-test-only";
+  process.env.ACCESS_TOKEN_PRIVATE_KEY = "epic4-test-only";
 
   server = await MongoMemoryReplSet.create({
     replSet: { count: 1 },
@@ -94,6 +73,9 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  jest.restoreAllMocks();
+  sendEmail.mockReset();
+
   await Promise.all([
     User.deleteMany({}),
     Initiative.deleteMany({}),
@@ -134,25 +116,16 @@ beforeEach(async () => {
   });
 
   process.env.EMAIL_MODE = "test";
-  process.env.NOTIFICATION_ADMIN_IDS =
-    String(admin);
-  process.env.EMAIL_FROM =
-    "notifications@example.org";
-  process.env.EMAIL_TEST_TO =
-    "test@example.org";
-  process.env.RESEND_API_KEY =
-    "test-key-never-sent";
-  process.env.ORG_NOTIFICATION_EMAILS =
-    JSON.stringify({
-      [owner]: ["organisation@example.org"],
-    });
-  process.env.NOTIFICATION_WEB_URL =
-    "https://staging.example.org";
+  process.env.NOTIFICATION_ADMIN_IDS = String(admin);
+  process.env.EMAIL_FROM = "notifications@example.org";
+  process.env.EMAIL_TEST_TO = "test@example.org";
+  process.env.RESEND_API_KEY = "test-key-never-sent";
+  process.env.NOTIFICATION_WEB_URL = "https://staging.example.org";
   process.env.VERCEL_ENV = "preview";
 
-  sendEmail.mockResolvedValue(
-    "provider-message-1"
-  );
+  delete process.env.ORG_NOTIFICATION_EMAILS;
+
+  sendEmail.mockResolvedValue("provider-message-1");
 });
 
 afterAll(async () => {
@@ -167,66 +140,44 @@ test("saves application and sends only to test inbox", async () => {
   const result = await apply();
   const record = await Notification.findOne({});
 
-  expect(result.notificationStatus).toBe(
-    "test_sent"
-  );
+  expect(result.notificationStatus).toBe("test_sent");
   expect(record.status).toBe("test_sent");
-  expect(record.intendedRecipients).toEqual([
-    "organisation@example.org",
-  ]);
+  expect(record.intendedRecipients).toEqual(["owner@example.org"]);
 
   expect(sendEmail).toHaveBeenCalledWith(
     expect.objectContaining({
       to: ["test@example.org"],
-      subject:
-        "[STAGING TEST] New volunteer application for Mentor",
-      text: expect.stringContaining(
-        "volunteer@example.org"
-      ),
+      subject: "[STAGING TEST] New volunteer application for Mentor",
+      text: expect.stringContaining("volunteer@example.org"),
     }),
     `application-${result.applicationId}`
   );
 
-  expect(record.payload.text).toContain(
-    record.appliedAt.toISOString()
-  );
-  expect(record.payload.text).toContain(
-    `/initiatives/${role._id}`
-  );
-  expect(record.providerMessageId).toBe(
-    "provider-message-1"
-  );
-  expect(
-    await Application.countDocuments()
-  ).toBe(1);
+  expect(record.payload.text).toContain(record.appliedAt.toISOString());
+  expect(record.payload.text).toContain(`/initiatives/${role._id}`);
+  expect(record.providerMessageId).toBe("provider-message-1");
+  expect(await Application.countDocuments()).toBe(1);
 });
 
-test("live mode uses configured organisation recipient", async () => {
+test("live mode uses the role owner email from users", async () => {
   process.env.EMAIL_MODE = "live";
   process.env.VERCEL_ENV = "production";
 
   const result = await apply();
 
-  expect(result.notificationStatus).toBe(
-    "sent"
-  );
-  expect(
-    sendEmail.mock.calls[0][0].to
-  ).toEqual(["organisation@example.org"]);
+  expect(result.notificationStatus).toBe("sent");
+  expect(sendEmail.mock.calls[0][0].to).toEqual(["owner@example.org"]);
 });
 
 test("sending happens after application commit", async () => {
   sendEmail.mockImplementation(async () => {
-    expect(
-      await Application.countDocuments()
-    ).toBe(1);
+    expect(await Application.countDocuments()).toBe(1);
 
-    const savedRole =
-      await Initiative.findById(role._id);
+    const savedRole = await Initiative.findById(role._id);
 
-    expect(
-      savedRole.applicants.map(String)
-    ).toContain(String(volunteer));
+    expect(savedRole.applicants.map(String)).toContain(
+      String(volunteer)
+    );
 
     return "committed";
   });
@@ -243,9 +194,7 @@ test("duplicate apply does not send another notification", async () => {
     status: 409,
   });
 
-  expect(
-    await Notification.countDocuments()
-  ).toBe(1);
+  expect(await Notification.countDocuments()).toBe(1);
   expect(sendEmail).toHaveBeenCalledTimes(1);
 });
 
@@ -259,91 +208,55 @@ test("inactive role creates no notification", async () => {
     status: 409,
   });
 
-  expect(
-    await Notification.countDocuments()
-  ).toBe(0);
+  expect(await Notification.countDocuments()).toBe(0);
   expect(sendEmail).not.toHaveBeenCalled();
 });
 
 test("notification write failure rolls back application", async () => {
   jest
     .spyOn(Notification, "create")
-    .mockRejectedValueOnce(
-      new Error("write failure")
-    );
+    .mockRejectedValueOnce(new Error("write failure"));
 
-  await expect(apply()).rejects.toThrow(
-    "write failure"
-  );
+  await expect(apply()).rejects.toThrow("write failure");
 
+  expect(await Application.countDocuments()).toBe(0);
   expect(
-    await Application.countDocuments()
-  ).toBe(0);
-
-  expect(
-    (await Initiative.findById(role._id))
-      .applicants
+    (await Initiative.findById(role._id)).applicants
   ).toHaveLength(0);
-
   expect(sendEmail).not.toHaveBeenCalled();
 });
 
 test("provider failure preserves application", async () => {
-  sendEmail.mockRejectedValue(
-    new Error("EMAIL_TIMEOUT")
-  );
+  sendEmail.mockRejectedValue(new Error("EMAIL_TIMEOUT"));
 
   const result = await apply();
   const record = await Notification.findOne({});
 
   expect(result.applied).toBe(true);
-  expect(result.notificationStatus).toBe(
-    "failed"
-  );
-  expect(record.failureReason).toBe(
-    "EMAIL_TIMEOUT"
-  );
+  expect(result.notificationStatus).toBe("failed");
+  expect(record.failureReason).toBe("EMAIL_TIMEOUT");
   expect(record.attempts).toBe(1);
-  expect(
-    record.nextAttemptAt.getTime()
-  ).toBeGreaterThan(Date.now());
-
-  expect(
-    await Application.countDocuments()
-  ).toBe(1);
+  expect(record.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
+  expect(await Application.countDocuments()).toBe(1);
 });
 
-test("missing recipients are traceable", async () => {
-  process.env.ORG_NOTIFICATION_EMAILS = "{}";
+test("missing role owner is traceable and application stays saved", async () => {
+  await User.deleteOne({ _id: owner });
 
+  expect((await apply()).notificationStatus).toBe("failed");
   expect(
-    (await apply()).notificationStatus
-  ).toBe("failed");
+    (await Notification.findOne({})).failureReason
+  ).toBe("ROLE_OWNER_NOT_FOUND");
 
-  expect(
-    (await Notification.findOne({}))
-      .failureReason
-  ).toBe(
-    "MISSING_OR_INVALID_ORGANISATION_RECIPIENT"
-  );
-
-  expect(
-    await Application.countDocuments()
-  ).toBe(1);
+  expect(await Application.countDocuments()).toBe(1);
   expect(sendEmail).not.toHaveBeenCalled();
 });
 
 test("disabled mode leaves a pending record", async () => {
   process.env.EMAIL_MODE = "disabled";
 
-  expect(
-    (await apply()).notificationStatus
-  ).toBe("pending");
-
-  expect(
-    (await Notification.findOne({})).status
-  ).toBe("pending");
-
+  expect((await apply()).notificationStatus).toBe("pending");
+  expect((await Notification.findOne({})).status).toBe("pending");
   expect(sendEmail).not.toHaveBeenCalled();
 });
 
@@ -353,29 +266,21 @@ test("concurrent retry workers send once", async () => {
   process.env.EMAIL_MODE = "test";
 
   await Promise.all([
-    dispatchNotification(
-      String(result.applicationId)
-    ),
-    dispatchNotification(
-      String(result.applicationId)
-    ),
+    dispatchNotification(String(result.applicationId)),
+    dispatchNotification(String(result.applicationId)),
   ]);
 
   expect(sendEmail).toHaveBeenCalledTimes(1);
 });
 
 test("retry preserves original payload and key", async () => {
-  sendEmail.mockRejectedValueOnce(
-    new Error("EMAIL_TIMEOUT")
-  );
+  sendEmail.mockRejectedValueOnce(new Error("EMAIL_TIMEOUT"));
 
   const result = await apply();
   const firstCall = sendEmail.mock.calls[0];
 
-  process.env.EMAIL_FROM =
-    "changed@example.org";
-  process.env.EMAIL_TEST_TO =
-    "changed-test@example.org";
+  process.env.EMAIL_FROM = "changed@example.org";
+  process.env.EMAIL_TEST_TO = "changed-test@example.org";
 
   await Notification.updateOne(
     {},
@@ -383,20 +288,14 @@ test("retry preserves original payload and key", async () => {
   );
 
   expect(
-    await dispatchNotification(
-      String(result.applicationId)
-    )
+    await dispatchNotification(String(result.applicationId))
   ).toBe("test_sent");
 
-  expect(sendEmail.mock.calls[1]).toEqual(
-    firstCall
-  );
+  expect(sendEmail.mock.calls[1]).toEqual(firstCall);
 });
 
 test("expired safe retry window requires review", async () => {
-  sendEmail.mockRejectedValueOnce(
-    new Error("EMAIL_TIMEOUT")
-  );
+  sendEmail.mockRejectedValueOnce(new Error("EMAIL_TIMEOUT"));
 
   const result = await apply();
 
@@ -405,17 +304,13 @@ test("expired safe retry window requires review", async () => {
     {
       $set: {
         nextAttemptAt: new Date(0),
-        firstAttemptAt: new Date(
-          Date.now() - 24 * 3600000
-        ),
+        firstAttemptAt: new Date(Date.now() - 24 * 3600000),
       },
     }
   );
 
   expect(
-    await dispatchNotification(
-      String(result.applicationId)
-    )
+    await dispatchNotification(String(result.applicationId))
   ).toBe("needs_review");
 
   expect(sendEmail).toHaveBeenCalledTimes(1);
@@ -438,9 +333,7 @@ test("abandoned worker lease can be recovered", async () => {
   );
 
   expect(
-    await dispatchNotification(
-      String(result.applicationId)
-    )
+    await dispatchNotification(String(result.applicationId))
   ).toBe("test_sent");
 });
 
@@ -454,25 +347,15 @@ test("stops after three provider attempts", async () => {
   for (let i = 0; i < 2; i++) {
     await Notification.updateOne(
       {},
-      {
-        $set: {
-          nextAttemptAt: new Date(0),
-        },
-      }
+      { $set: { nextAttemptAt: new Date(0) } }
     );
 
-    await dispatchNotification(
-      String(result.applicationId)
-    );
+    await dispatchNotification(String(result.applicationId));
   }
 
-  expect(
-    (await Notification.findOne({})).status
-  ).toBe("needs_review");
+  expect((await Notification.findOne({})).status).toBe("needs_review");
 
-  await dispatchNotification(
-    String(result.applicationId)
-  );
+  await dispatchNotification(String(result.applicationId));
 
   expect(sendEmail).toHaveBeenCalledTimes(3);
 });
@@ -485,15 +368,9 @@ test("admin list is private and omits email body", async () => {
     .set("Cookie", cookie(admin));
 
   expect(result.status).toBe(200);
-  expect(
-    result.headers["cache-control"]
-  ).toBe("private, no-store");
-  expect(
-    result.body.data[0].payload
-  ).toBeUndefined();
-  expect(
-    result.body.data[0].volunteerEmail
-  ).toBeUndefined();
+  expect(result.headers["cache-control"]).toBe("private, no-store");
+  expect(result.body.data[0].payload).toBeUndefined();
+  expect(result.body.data[0].volunteerEmail).toBeUndefined();
 });
 
 test("non-admins cannot read or retry notifications", async () => {
@@ -501,8 +378,7 @@ test("non-admins cannot read or retry notifications", async () => {
   const record = await Notification.findOne({});
 
   expect(
-    (await request(app).get("/notifications"))
-      .status
+    (await request(app).get("/notifications")).status
   ).toBe(401);
 
   for (const id of [volunteer, owner]) {
@@ -517,9 +393,7 @@ test("non-admins cannot read or retry notifications", async () => {
     expect(
       (
         await request(app)
-          .post(
-            `/notifications/${record._id}/retry`
-          )
+          .post(`/notifications/${record._id}/retry`)
           .set("Cookie", cookie(id))
       ).status
     ).toBe(403);
@@ -542,18 +416,14 @@ test("self-edited admin role cannot bypass allowlist", async () => {
 });
 
 test("admin retry enforces cooldown and no resend", async () => {
-  sendEmail.mockRejectedValueOnce(
-    new Error("EMAIL_TIMEOUT")
-  );
+  sendEmail.mockRejectedValueOnce(new Error("EMAIL_TIMEOUT"));
 
   await apply();
   const record = await Notification.findOne({});
 
   const retry = () =>
     request(app)
-      .post(
-        `/notifications/${record._id}/retry`
-      )
+      .post(`/notifications/${record._id}/retry`)
       .set("Cookie", cookie(admin));
 
   expect((await retry()).status).toBe(409);
@@ -563,9 +433,119 @@ test("admin retry enforces cooldown and no resend", async () => {
     { $set: { nextAttemptAt: new Date(0) } }
   );
 
-  expect(
-    (await retry()).body.data.status
-  ).toBe("test_sent");
-
+  expect((await retry()).body.data.status).toBe("test_sent");
   expect((await retry()).status).toBe(409);
+});
+
+test.each(["", "invalid"])(
+  "invalid owner email is traceable without losing the application: %s",
+  async (email) => {
+    await User.collection.updateOne(
+      { _id: owner },
+      { $set: { email } }
+    );
+
+    const result = await apply();
+    const record = await Notification.findOne({});
+
+    expect(result.applied).toBe(true);
+    expect(result.notificationStatus).toBe("failed");
+    expect(record.failureReason).toBe("MISSING_OR_INVALID_OWNER_EMAIL");
+    expect(record.attempts).toBe(0);
+    expect(await Application.countDocuments()).toBe(1);
+    expect(sendEmail).not.toHaveBeenCalled();
+  }
+);
+
+test("each role notifies its own owner and ignores the old mapping", async () => {
+  process.env.EMAIL_MODE = "live";
+  process.env.VERCEL_ENV = "production";
+  process.env.ORG_NOTIFICATION_EMAILS = JSON.stringify({
+    [owner]: ["wrong@example.org"],
+  });
+
+  const secondOwner = new mongoose.Types.ObjectId();
+
+  await User.collection.insertOne({
+    _id: secondOwner,
+    name: "Second Organisation",
+    email: "second-owner@example.org",
+    role: "organization",
+  });
+
+  const secondRole = await Initiative.create({
+    userId: secondOwner,
+    initiativeName: "Tutor",
+    description: "Test",
+    servicesNeeded: ["Tutoring"],
+  });
+
+  await apply();
+  await createApplication(String(volunteer), String(secondRole._id));
+
+  expect(sendEmail.mock.calls[0][0].to).toEqual(["owner@example.org"]);
+  expect(sendEmail.mock.calls[1][0].to).toEqual([
+    "second-owner@example.org",
+  ]);
+});
+
+test("retry reads a corrected owner email when no send was attempted", async () => {
+  process.env.EMAIL_MODE = "live";
+  process.env.VERCEL_ENV = "production";
+
+  await User.collection.updateOne(
+    { _id: owner },
+    { $set: { email: "" } }
+  );
+
+  const result = await apply();
+
+  expect(result.notificationStatus).toBe("failed");
+  expect(sendEmail).not.toHaveBeenCalled();
+
+  await User.collection.updateOne(
+    { _id: owner },
+    { $set: { email: "corrected@example.org" } }
+  );
+
+  await Notification.updateOne(
+    {},
+    { $set: { nextAttemptAt: new Date(0) } }
+  );
+
+  expect(
+    await dispatchNotification(String(result.applicationId))
+  ).toBe("sent");
+
+  expect(sendEmail.mock.calls[0][0].to).toEqual([
+    "corrected@example.org",
+  ]);
+  expect(await Application.countDocuments()).toBe(1);
+});
+
+test("retry preserves the original owner recipient after a sending attempt", async () => {
+  process.env.EMAIL_MODE = "live";
+  process.env.VERCEL_ENV = "production";
+  sendEmail.mockRejectedValueOnce(new Error("EMAIL_TIMEOUT"));
+
+  const result = await apply();
+  const firstCall = sendEmail.mock.calls[0];
+
+  expect(firstCall[0].to).toEqual(["owner@example.org"]);
+
+  await User.collection.updateOne(
+    { _id: owner },
+    { $set: { email: "changed-owner@example.org" } }
+  );
+
+  await Notification.updateOne(
+    {},
+    { $set: { nextAttemptAt: new Date(0) } }
+  );
+
+  expect(
+    await dispatchNotification(String(result.applicationId))
+  ).toBe("sent");
+
+  expect(sendEmail.mock.calls[1]).toEqual(firstCall);
 });

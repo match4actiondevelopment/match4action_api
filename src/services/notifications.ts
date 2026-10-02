@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { Notification } from "../models/Notification";
+import { User } from "../models/User";
 import { prepareEmail, sendEmail } from "./notificationEmail";
 
 const MAX_ATTEMPTS = 3;
@@ -10,9 +11,7 @@ export async function dispatchNotification(
   applicationId: string
 ): Promise<string> {
   if (
-    !["test", "live"].includes(
-      process.env.EMAIL_MODE || ""
-    )
+    !["test", "live"].includes(process.env.EMAIL_MODE || "")
   ) {
     return "pending";
   }
@@ -46,8 +45,8 @@ export async function dispatchNotification(
 
   if (!record) {
     return (
-      (await Notification.findOne({ applicationId }))
-        ?.status || "pending"
+      (await Notification.findOne({ applicationId }))?.status ||
+      "pending"
     );
   }
 
@@ -60,22 +59,19 @@ export async function dispatchNotification(
     if (
       record.attempts >= MAX_ATTEMPTS ||
       (record.firstAttemptAt &&
-        now.getTime() -
-          record.firstAttemptAt.getTime() >=
+        now.getTime() - record.firstAttemptAt.getTime() >=
           SAFE_RETRY_WINDOW)
     ) {
       await Notification.updateOne(filter, {
         $set: {
           status: "needs_review",
-          failureReason:
-            "RETRY_LIMIT_OR_SAFE_WINDOW_EXCEEDED",
+          failureReason: "RETRY_LIMIT_OR_SAFE_WINDOW_EXCEEDED",
         },
         $push: {
           history: {
             at: now,
             status: "needs_review",
-            reason:
-              "RETRY_LIMIT_OR_SAFE_WINDOW_EXCEEDED",
+            reason: "RETRY_LIMIT_OR_SAFE_WINDOW_EXCEEDED",
           },
         },
         $unset: {
@@ -87,8 +83,8 @@ export async function dispatchNotification(
       return "needs_review";
     }
 
-    // Freeze the payload after the first sending attempt.
-    // Retries must reuse the same payload and idempotency key.
+    // Preserve the original payload and recipient after an attempt.
+    // Retrying with the same key requires the same payload.
     if (record.payload) {
       if (
         record.mode !== process.env.EMAIL_MODE ||
@@ -96,38 +92,38 @@ export async function dispatchNotification(
           process.env.VERCEL_ENV &&
           process.env.VERCEL_ENV !== "production")
       ) {
-        throw new Error(
-          "EMAIL_MODE_CHANGED_REQUIRES_REVIEW"
-        );
+        throw new Error("EMAIL_MODE_CHANGED_REQUIRES_REVIEW");
       }
 
       if (!process.env.RESEND_API_KEY) {
-        throw new Error(
-          "EMAIL_PROVIDER_NOT_CONFIGURED"
-        );
+        throw new Error("EMAIL_PROVIDER_NOT_CONFIGURED");
       }
     } else {
-      const prepared = prepareEmail(record);
+      // organisationId was copied from initiative.userId when applying.
+      const owner = await User.findById(record.organisationId)
+        .select("email")
+        .lean();
+
+      if (!owner) {
+        throw new Error("ROLE_OWNER_NOT_FOUND");
+      }
+
+      const prepared = prepareEmail(record, owner.email);
       record.set(prepared);
     }
 
-    const attempt = await Notification.updateOne(
-      filter,
-      {
-        $set: {
-          payload: record.payload,
-          mode: record.mode,
-          intendedRecipients:
-            record.intendedRecipients,
-          firstAttemptAt:
-            record.firstAttemptAt || now,
-          lastAttemptAt: now,
-        },
-        $inc: {
-          attempts: 1,
-        },
-      }
-    );
+    const attempt = await Notification.updateOne(filter, {
+      $set: {
+        payload: record.payload,
+        mode: record.mode,
+        intendedRecipients: record.intendedRecipients,
+        firstAttemptAt: record.firstAttemptAt || now,
+        lastAttemptAt: now,
+      },
+      $inc: {
+        attempts: 1,
+      },
+    });
 
     if (attempt.modifiedCount !== 1) {
       return "pending";
@@ -192,9 +188,7 @@ export async function dispatchNotification(
       $set: {
         status,
         failureReason: reason,
-        nextAttemptAt: new Date(
-          Date.now() + RETRY_DELAY
-        ),
+        nextAttemptAt: new Date(Date.now() + RETRY_DELAY),
       },
       $push: {
         history: {
