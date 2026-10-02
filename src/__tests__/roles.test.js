@@ -53,6 +53,7 @@ const create = (name, role) =>
       name: "credentials",
     },
     termsAndConditions: true,
+    roleSelectionPending: role === "volunteer",
   });
 
 beforeAll(async () => {
@@ -146,23 +147,28 @@ test(
   }
 );
 
-test(
-  "volunteer selection persists and removes organisation permissions",
-  async () => {
-    const oldCookie = cookie(organisation);
+test("completed accounts cannot switch roles", async () => {
+  expect((await select("volunteer", organisation)).status).toBe(403);
+  expect((await User.findById(organisation._id)).role).toBe("organization");
+  expect((await select("volunteer")).status).toBe(200);
+  expect((await select("organization")).status).toBe(403);
+});
 
-    expect(
-      (await select("volunteer", organisation))
-        .status
-    ).toBe(200);
+test("legacy accounts without a selection flag cannot be reclassified", async () => {
+  await User.collection.updateOne({ _id: volunteer._id }, { $unset: { roleSelectionPending: "" } });
+  expect((await select("organization")).status).toBe(403);
+});
 
-    const denied = await request(app)
-      .get("/organisation-only")
-      .set("Cookie", oldCookie);
+test("concurrent choices can complete onboarding only once", async () => {
+  const results = await Promise.all([select("organization"), select("volunteer")]);
+  expect(results.map(r => r.status).sort()).toEqual([200, 403]);
+  expect((await User.findById(volunteer._id)).roleSelectionPending).toBe(false);
+});
 
-    expect(denied.status).toBe(403);
-  }
-);
+test("pending accounts cannot use organisation features", async () => {
+  await User.updateOne({ _id: organisation._id }, { $set: { roleSelectionPending: true } });
+  expect((await request(app).get("/organisation-only").set("Cookie", cookie(organisation))).status).toBe(403);
+});
 
 test.each([
   "admin",

@@ -1,11 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import jwt, {
-  JsonWebTokenError,
-  NotBeforeError,
-  TokenExpiredError,
-} from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { uuid } from "uuidv4";
-import { isLogged, signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
+import { signJwtAccessToken, signJwtRefreshToken } from "../middleware/jwt";
 import { User, UserRole } from "../models/User";
 import { UserToken } from "../models/UserToken";
 import { hashPassword } from "../utils/bcrypt";
@@ -31,7 +27,7 @@ export const login = async (
     const loginDone = await doLogin(req);
 
     if (loginDone.success == false) {
-      next(createError(404, "Login unsuccessfull"));
+      return next(createError(404, "Login unsuccessfull"));
     }
 
     return res
@@ -63,6 +59,7 @@ export const register = async (
       email: req.body?.email,
       password: newPassword,
       termsAndConditions: req.body?.termsAndConditions,
+      roleSelectionPending: true,
       provider: {
         id: req.body?.provider?.id ?? uuid(),
         name: req.body?.provider?.name,
@@ -153,6 +150,14 @@ export const refreshToken = async (
   try {
     const token = req?.cookies?.refresh_token;
 
+    if (typeof token !== "string" || !token) {
+      return next(createError(401, "Refresh token not provided."));
+    }
+
+    if (!process.env.REFRESH_TOKEN_PRIVATE_KEY) {
+      return next(createError(500, "Authentication is not configured."));
+    }
+
     const refreshToken = await UserToken.findOne({ token });
 
     if (!refreshToken) {
@@ -165,33 +170,19 @@ export const refreshToken = async (
       return next(createError(404, "User not found."));
     }
 
-    jwt.verify(
-      refreshToken?.token,
-      process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
-      async (err, _) => {
-        if (err instanceof TokenExpiredError) {
-          await UserToken.findByIdAndRemove(refreshToken?._id, {
-            useFindAndModify: false,
-          }).exec();
-          return next(
-            createError(403, "Unauthorized! Access Token was expired.")
-          );
-        }
-        if (err instanceof NotBeforeError) {
-          await UserToken.findByIdAndRemove(refreshToken?._id, {
-            useFindAndModify: false,
-          }).exec();
-          return next(createError(403, "Jwt not active."));
-        }
-        if (err instanceof JsonWebTokenError) {
-          await UserToken.findByIdAndRemove(refreshToken?._id, {
-            useFindAndModify: false,
-          }).exec();
-          return next(createError(403, "Jwt malformed."));
-        }
-        next();
+    try {
+      const payload = jwt.verify(
+        refreshToken.token,
+        process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
+        { algorithms: ["HS256"] }
+      );
+      if (typeof payload === "string" || String(payload._id) !== String(user._id)) {
+        throw new Error("Invalid refresh identity.");
       }
-    );
+    } catch {
+      await UserToken.deleteOne({ _id: refreshToken._id });
+      return next(createError(403, "Refresh token is invalid or expired."));
+    }
 
     const access_token = signJwtAccessToken({
       _id: user._id!,
@@ -248,6 +239,7 @@ export const google = async (
     }
 
     let url = new URL(CLIENT_BASE_URL);
+    if (user.roleSelectionPending === true) url.pathname = "/role-selection";
     url.searchParams.set("access_token", access_token);
     url.searchParams.set("refresh_token", refresh_token);
     url.searchParams.set("user_id", user?._id);

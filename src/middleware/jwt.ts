@@ -104,7 +104,7 @@ const authenticate = (
       // The token proves identity.
       // MongoDB determines the account's current permissions.
       const user = await User.findById(payload._id)
-        .select("role email")
+        .select("role email roleSelectionPending")
         .lean();
 
       if (!user) {
@@ -126,6 +126,10 @@ const authenticate = (
         );
       }
 
+      if (roles && user.roleSelectionPending === true) {
+        return next(createError(403, "Complete account role selection first."));
+      }
+
       if (
         roles &&
         !roles.includes(
@@ -144,6 +148,7 @@ const authenticate = (
         _id: String(user._id),
         role: user.role,
         email: user.email,
+        roleSelectionPending: user.roleSelectionPending,
       } as UserDocument;
 
       return next();

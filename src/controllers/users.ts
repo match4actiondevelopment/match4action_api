@@ -144,7 +144,7 @@ export const update = async (
 
     // Older clients submit their unchanged role.
     // Accept that without writing it.
-    // Actual role changes must use /users/role.
+    // Role selection is available only during unfinished onboarding.
     if (
       Object.prototype.hasOwnProperty.call(
         body,
@@ -155,7 +155,7 @@ export const update = async (
       return next(
         createError(
           403,
-          "Use role selection to change your account role."
+          "Account roles cannot be changed through profile editing."
         )
       );
     }
@@ -228,6 +228,7 @@ export const selectRole = async (
     const user = await User.findOneAndUpdate(
       {
         _id: req.user?._id,
+        roleSelectionPending: true,
         role: {
           $in: [
             UserRole.volunteer,
@@ -236,7 +237,7 @@ export const selectRole = async (
         },
       },
       {
-        $set: { role },
+        $set: { role, roleSelectionPending: false },
       },
       {
         new: true,
@@ -248,7 +249,7 @@ export const selectRole = async (
       return next(
         createError(
           403,
-          "This account cannot change its role here."
+          "Role selection is already complete or unavailable for this account."
         )
       );
     }

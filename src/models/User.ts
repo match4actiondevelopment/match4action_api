@@ -25,6 +25,7 @@ export type UserDocument = Document & {
   };
   bio?: string;
   role?: UserRole;
+  roleSelectionPending?: boolean;
   answers?: Record<string, any>;
 };
 
@@ -54,6 +55,7 @@ const userSchema = new Schema<UserDocument>(
       enum: Object.values(UserRole),
       default: "volunteer",
     },
+    roleSelectionPending: { type: Boolean, default: false },
     bio: {
       type: String,
     },

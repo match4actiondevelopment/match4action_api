@@ -121,6 +121,23 @@ afterAll(async () => {
   }
 });
 
+test("new applications capture report details and source", async () => {
+  await Initiative.updateOne({ _id: initiative._id }, { $set: { location: { city: "Chicago", country: "US" } } });
+  const result = await apply().send({ applicationSource: "recommendations" });
+  expect(result.status).toBe(200);
+  const saved = await Application.findOne({ userId: volunteerId });
+  expect(saved.volunteerName).toBe("Volunteer");
+  expect(saved.volunteerEmail).toBe("volunteer@example.com");
+  expect(saved.opportunityLocation).toBe("Chicago, US");
+  expect(saved.applicationSource).toBe("recommendations");
+});
+
+test.each(["invented", { $ne: "unknown" }])("invalid source %p creates no application", async source => {
+  expect((await apply().send({ applicationSource: source })).status).toBe(400);
+  expect(await Application.countDocuments()).toBe(0);
+  expect((await Initiative.findById(initiative._id)).applicants).toHaveLength(0);
+});
+
 test(
   "saves date, consent, status and profile fields",
   async () => {

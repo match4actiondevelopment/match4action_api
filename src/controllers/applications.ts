@@ -22,10 +22,13 @@ export async function apply(
       );
     }
 
-    const data = await createApplication(
-      String(req.user._id),
-      req.params.id
-    );
+    const source = req.body?.applicationSource;
+    if (source !== undefined && typeof source !== "string") {
+      throw createError(400, "Invalid application source.");
+    }
+    const data = source === undefined
+      ? await createApplication(String(req.user._id), req.params.id)
+      : await createApplication(String(req.user._id), req.params.id, source);
 
     return res.status(200).json({
       success: true,

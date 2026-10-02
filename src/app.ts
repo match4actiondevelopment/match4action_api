@@ -24,6 +24,8 @@ import ikigaiQuestions from "./routes/ikigai-questions";
 import matching from "./routes/matching";
 import ikigaiResponses from "./routes/ikigai-responses";
 import notifications from "./routes/notifications";
+import reports from "./routes/reports";
+import { isAllowedWebOrigin } from "./config/webOrigins";
 
 import { ErrorWithStatus } from "./utils/createError";
 import {
@@ -55,16 +57,7 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    const allowedOrigins = [
-      "http://localhost:3000",
-    ];
-
-    if (
-      allowedOrigins.indexOf(origin) !== -1 ||
-      origin.endsWith(".vercel.app")
-    ) {
-      return callback(null, true);
-    }
+    if (isAllowedWebOrigin(origin)) return callback(null, true);
 
     return callback(
       new Error("Not allowed by CORS")
@@ -97,6 +90,7 @@ app.use("/ikigai-questions", ikigaiQuestions);
 app.use("/ikigai-responses", ikigaiResponses);
 app.use("/matching", matching);
 app.use("/notifications", notifications);
+app.use("/reports", reports);
 
 app.use(
   (

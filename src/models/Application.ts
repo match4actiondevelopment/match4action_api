@@ -2,6 +2,13 @@ import mongoose, { Schema } from "mongoose";
 
 const applicationSchema = new Schema(
   {
+    volunteerName: { type: String, default: null },
+    volunteerEmail: { type: String, default: null },
+    opportunityLocation: { type: String, default: null },
+    applicationSource: {
+      type: String, enum: ["recommendations", "initiatives", "role_details", "unknown"],
+      default: "unknown",
+    },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -59,6 +66,8 @@ applicationSchema.index(
 );
 
 applicationSchema.index({ userId: 1, appliedAt: -1 });
+applicationSchema.index({ organisationId: 1, appliedAt: -1, _id: -1 });
+applicationSchema.index({ appliedAt: -1, _id: -1 });
 
 export const Application = mongoose.model(
   "Application",

@@ -14,10 +14,15 @@ const alreadyApplied = () =>
 
 export async function createApplication(
   userId: string,
-  initiativeId: string
+  initiativeId: string,
+  applicationSource = "unknown"
 ) {
   if (!mongoose.isValidObjectId(initiativeId)) {
     throw createError(400, "Invalid initiative id.");
+  }
+
+  if (!["recommendations", "initiatives", "role_details", "unknown"].includes(applicationSource)) {
+    throw createError(400, "Invalid application source.");
   }
 
   await Promise.all([
@@ -96,6 +101,10 @@ export async function createApplication(
         .select("name")
         .session(session);
 
+      const volunteer = await User.findById(userId)
+        .select("name email")
+        .session(session);
+
       const now = new Date();
 
       const [application] = await Application.create(
@@ -103,6 +112,11 @@ export async function createApplication(
           {
             userId,
             initiativeId,
+            volunteerName: volunteer?.name || null,
+            volunteerEmail: volunteer?.email || null,
+            opportunityLocation: [initiative.location?.city, initiative.location?.country]
+              .filter(Boolean).join(", ") || null,
+            applicationSource,
             organisationId: initiative.userId,
             roleName: initiative.initiativeName,
             organisationName: owner?.name || null,
@@ -114,9 +128,6 @@ export async function createApplication(
         { session }
       );
 
-      const volunteer = await User.findById(userId)
-        .select("name email")
-        .session(session);
 
       await Notification.create(
         [

@@ -41,6 +41,7 @@ passport.use(
           image: profile.photos?.[0].value,
           password: null,
           termsAndConditions: true,
+          roleSelectionPending: true,
         });
         if (newUser) {
           done(null, newUser);
