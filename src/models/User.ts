@@ -1,11 +1,11 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document } from "mongoose";
 
 const Schema = mongoose.Schema;
 
 export enum UserRole {
-  'volunteer',
-  'admin',
-  'organization',
+  volunteer = "volunteer",
+  admin = "admin",
+  organization = "organization",
 }
 
 export type UserDocument = Document & {
@@ -30,7 +30,10 @@ export type UserDocument = Document & {
 
 const userSchema = new Schema<UserDocument>(
   {
-    name: { type: String, required: true },
+    name: {
+      type: String,
+      required: true,
+    },
     email: {
       type: String,
       required: true,
@@ -48,8 +51,8 @@ const userSchema = new Schema<UserDocument>(
     },
     role: {
       type: String,
-      enum: UserRole,
-      default: 'volunteer',
+      enum: Object.values(UserRole),
+      default: "volunteer",
     },
     bio: {
       type: String,
@@ -62,7 +65,7 @@ const userSchema = new Schema<UserDocument>(
       name: {
         type: String,
         required: true,
-      }
+      },
     },
     location: {
       country: {
@@ -73,11 +76,16 @@ const userSchema = new Schema<UserDocument>(
       },
     },
     answers: {},
-    termsAndConditions: { type: Boolean },
+    termsAndConditions: {
+      type: Boolean,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export const User = mongoose.model<UserDocument>('User', userSchema);
+export const User = mongoose.model<UserDocument>(
+  "User",
+  userSchema
+);

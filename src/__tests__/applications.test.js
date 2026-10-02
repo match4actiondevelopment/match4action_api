@@ -94,6 +94,15 @@ beforeEach(async () => {
   await User.collection.insertOne({
     _id: ownerId,
     name: "Test Organisation",
+    email: "owner@example.com",
+    role: "organization",
+  });
+
+  await User.collection.insertOne({
+    _id: volunteerId,
+    name: "Volunteer",
+    email: "volunteer@example.com",
+    role: "volunteer",
   });
 
   initiative = await Initiative.create({
@@ -112,132 +121,146 @@ afterAll(async () => {
   }
 });
 
-test("saves date, consent, status and profile fields", async () => {
-  const before = Date.now();
-  const response = await apply();
+test(
+  "saves date, consent, status and profile fields",
+  async () => {
+    const before = Date.now();
+    const response = await apply();
 
-  expect(response.status).toBe(200);
+    expect(response.status).toBe(200);
 
-  const saved = await Application.findOne({
-    userId: volunteerId,
-  });
+    const saved = await Application.findOne({
+      userId: volunteerId,
+    });
 
-  expect(saved.status).toBe("applied");
+    expect(saved.status).toBe("applied");
 
-  expect(saved.appliedAt.getTime())
-    .toBeGreaterThanOrEqual(before);
+    expect(saved.appliedAt.getTime())
+      .toBeGreaterThanOrEqual(before);
 
-  expect(saved.consentTimestamp)
-    .toEqual(saved.appliedAt);
+    expect(saved.consentTimestamp)
+      .toEqual(saved.appliedAt);
 
-  expect(String(saved.organisationId))
-    .toBe(String(ownerId));
+    expect(String(saved.organisationId))
+      .toBe(String(ownerId));
 
-  const updatedInitiative =
-    await Initiative.findById(initiative._id);
+    const updatedInitiative =
+      await Initiative.findById(initiative._id);
 
-  expect(
-    updatedInitiative.applicants.map(String)
-  ).toEqual([String(volunteerId)]);
+    expect(
+      updatedInitiative.applicants.map(String)
+    ).toEqual([String(volunteerId)]);
 
-  const list = await request(app)
-    .get("/initiatives/applications/me")
-    .set("Cookie", cookie());
+    const list = await request(app)
+      .get("/initiatives/applications/me")
+      .set("Cookie", cookie());
 
-  expect(list.status).toBe(200);
+    expect(list.status).toBe(200);
 
-  expect(list.headers["cache-control"])
-    .toBe("private, no-store");
+    expect(list.headers["cache-control"])
+      .toBe("private, no-store");
 
-  expect(list.body.data).toEqual([
-    expect.objectContaining({
-      roleName: "Test Role",
-      organisationName: "Test Organisation",
-      appliedAt: response.body.data.appliedAt,
-      status: "applied",
-      legacy: false,
-    }),
-  ]);
-});
+    expect(list.body.data).toEqual([
+      expect.objectContaining({
+        roleName: "Test Role",
+        organisationName: "Test Organisation",
+        appliedAt: response.body.data.appliedAt,
+        status: "applied",
+        legacy: false,
+      }),
+    ]);
+  }
+);
 
-test("duplicate returns 409 and preserves original date", async () => {
-  await apply();
+test(
+  "duplicate returns 409 and preserves original date",
+  async () => {
+    await apply();
 
-  const original = await Application.findOne({});
-  const duplicate = await apply();
+    const original = await Application.findOne({});
+    const duplicate = await apply();
 
-  expect(duplicate.status).toBe(409);
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.message)
+      .toMatch(/already applied/);
 
-  expect(duplicate.body.message)
-    .toMatch(/already applied/);
+    expect(await Application.countDocuments())
+      .toBe(1);
 
-  expect(await Application.countDocuments())
-    .toBe(1);
+    const saved = await Application.findOne({});
 
-  const saved = await Application.findOne({});
+    expect(saved.appliedAt)
+      .toEqual(original.appliedAt);
+  }
+);
 
-  expect(saved.appliedAt)
-    .toEqual(original.appliedAt);
-});
+test(
+  "concurrent requests create one application",
+  async () => {
+    const responses = await Promise.all([
+      apply(),
+      apply(),
+      apply(),
+    ]);
 
-test("concurrent requests create one application", async () => {
-  const responses = await Promise.all([
-    apply(),
-    apply(),
-    apply(),
-  ]);
+    expect(
+      responses
+        .map((response) => response.status)
+        .sort()
+    ).toEqual([200, 409, 409]);
 
-  expect(
-    responses
-      .map((response) => response.status)
-      .sort()
-  ).toEqual([200, 409, 409]);
+    expect(await Application.countDocuments())
+      .toBe(1);
 
-  expect(await Application.countDocuments())
-    .toBe(1);
-
-  const saved = await Initiative.findById(
-    initiative._id
-  );
-
-  expect(saved.applicants).toHaveLength(1);
-});
-
-test("unique index independently rejects duplicates", async () => {
-  await apply();
-
-  const record = await Application.findOne({})
-    .lean();
-
-  delete record._id;
-
-  await expect(
-    Application.create(record)
-  ).rejects.toMatchObject({ code: 11000 });
-});
-
-test("failed save rolls back the applicant array", async () => {
-  jest.spyOn(Application, "create")
-    .mockRejectedValueOnce(
-      new Error("simulated write failure")
+    const saved = await Initiative.findById(
+      initiative._id
     );
 
-  await expect(
-    createApplication(
-      String(volunteerId),
-      String(initiative._id)
-    )
-  ).rejects.toThrow("simulated write failure");
+    expect(saved.applicants).toHaveLength(1);
+  }
+);
 
-  expect(await Application.countDocuments())
-    .toBe(0);
+test(
+  "unique index independently rejects duplicates",
+  async () => {
+    await apply();
 
-  const saved = await Initiative.findById(
-    initiative._id
-  );
+    const record = await Application.findOne({})
+      .lean();
 
-  expect(saved.applicants).toHaveLength(0);
-});
+    delete record._id;
+
+    await expect(
+      Application.create(record)
+    ).rejects.toMatchObject({ code: 11000 });
+  }
+);
+
+test(
+  "failed save rolls back the applicant array",
+  async () => {
+    jest.spyOn(Application, "create")
+      .mockRejectedValueOnce(
+        new Error("simulated write failure")
+      );
+
+    await expect(
+      createApplication(
+        String(volunteerId),
+        String(initiative._id)
+      )
+    ).rejects.toThrow("simulated write failure");
+
+    expect(await Application.countDocuments())
+      .toBe(0);
+
+    const saved = await Initiative.findById(
+      initiative._id
+    );
+
+    expect(saved.applicants).toHaveLength(0);
+  }
+);
 
 test.each(["inactive", "closed"])(
   "rejects %s without writes",
@@ -260,159 +283,193 @@ test.each(["inactive", "closed"])(
   }
 );
 
-test("missing opportunity status remains active", async () => {
-  await Initiative.collection.updateOne(
-    { _id: initiative._id },
-    { $unset: { status: "" } }
-  );
-
-  expect((await apply()).status).toBe(200);
-});
-
-test("legacy application remains visible and blocks reapplication", async () => {
-  await Initiative.updateOne(
-    { _id: initiative._id },
-    { $addToSet: { applicants: volunteerId } }
-  );
-
-  const list = await request(app)
-    .get("/initiatives/applications/me")
-    .set("Cookie", cookie());
-
-  expect(list.body.data).toEqual([
-    expect.objectContaining({
-      appliedAt: null,
-      legacy: true,
-      status: "applied",
-    }),
-  ]);
-
-  expect((await apply()).status).toBe(409);
-
-  expect(await Application.countDocuments())
-    .toBe(0);
-});
-
-test("another user sees no private records and can apply", async () => {
-  await apply();
-
-  const otherUser = new mongoose.Types.ObjectId();
-
-  const list = await request(app)
-    .get(
-      `/initiatives/applications/me?userId=${volunteerId}`
-    )
-    .set("Cookie", cookie(otherUser));
-
-  expect(list.body.data).toEqual([]);
-
-  const response = await apply(
-    initiative._id,
-    otherUser
-  );
-
-  expect(response.status).toBe(200);
-
-  expect(await Application.countDocuments())
-    .toBe(2);
-});
-
-test("multiple roles are allowed and sorted newest first", async () => {
-  await apply();
-
-  await Application.updateOne(
-    {},
-    {
-      $set: {
-        appliedAt: new Date("2020-01-01"),
-      },
-    }
-  );
-
-  const second = await Initiative.create({
-    userId: ownerId,
-    initiativeName: "Second Role",
-    description: "Another opportunity",
-    servicesNeeded: ["Test"],
-  });
-
-  expect((await apply(second._id)).status)
-    .toBe(200);
-
-  const list = await request(app)
-    .get("/initiatives/applications/me")
-    .set("Cookie", cookie());
-
-  expect(
-    list.body.data.map((item) => item.roleName)
-  ).toEqual(["Second Role", "Test Role"]);
-});
-
-test("new application history survives role deletion", async () => {
-  await apply();
-
-  await Initiative.deleteOne({
-    _id: initiative._id,
-  });
-
-  const list = await request(app)
-    .get("/initiatives/applications/me")
-    .set("Cookie", cookie());
-
-  expect(list.body.data[0].roleName)
-    .toBe("Test Role");
-});
-
-test("validates authentication, role, existence and ID", async () => {
-  const unauthenticatedApply = await request(app)
-    .patch(
-      `/initiatives/apply/${initiative._id}`
+test(
+  "missing opportunity status remains active",
+  async () => {
+    await Initiative.collection.updateOne(
+      { _id: initiative._id },
+      { $unset: { status: "" } }
     );
 
-  expect(unauthenticatedApply.status)
-    .toBe(401);
+    expect((await apply()).status).toBe(200);
+  }
+);
 
-  const unauthenticatedList = await request(app)
-    .get("/initiatives/applications/me");
-
-  expect(unauthenticatedList.status)
-    .toBe(401);
-
-  const wrongRole = await request(app)
-    .patch(
-      `/initiatives/apply/${initiative._id}`
-    )
-    .set(
-      "Cookie",
-      cookie(volunteerId, "organization")
+test(
+  "legacy application remains visible and blocks reapplication",
+  async () => {
+    await Initiative.updateOne(
+      { _id: initiative._id },
+      { $addToSet: { applicants: volunteerId } }
     );
 
-  expect(wrongRole.status).toBe(403);
-
-  const missingInitiative = await apply(
-    new mongoose.Types.ObjectId()
-  );
-
-  expect(missingInitiative.status).toBe(404);
-
-  expect((await apply("bad-id")).status)
-    .toBe(400);
-
-  expect(await Application.countDocuments())
-    .toBe(0);
-});
-
-test("old endpoints cannot bypass tracking", async () => {
-  for (const action of [
-    "subscribe",
-    "unsubscribe",
-  ]) {
-    const response = await request(app)
-      .patch(
-        `/initiatives/${action}/${initiative._id}`
-      )
+    const list = await request(app)
+      .get("/initiatives/applications/me")
       .set("Cookie", cookie());
 
-    expect(response.status).toBe(410);
+    expect(list.body.data).toEqual([
+      expect.objectContaining({
+        appliedAt: null,
+        legacy: true,
+        status: "applied",
+      }),
+    ]);
+
+    expect((await apply()).status).toBe(409);
+
+    expect(await Application.countDocuments())
+      .toBe(0);
   }
-});
+);
+
+test(
+  "another user sees no private records and can apply",
+  async () => {
+    await apply();
+
+    const otherUser =
+      new mongoose.Types.ObjectId();
+
+    await User.collection.insertOne({
+      _id: otherUser,
+      name: "Other Volunteer",
+      email: "other@example.com",
+      role: "volunteer",
+    });
+
+    const list = await request(app)
+      .get(
+        `/initiatives/applications/me?userId=${volunteerId}`
+      )
+      .set("Cookie", cookie(otherUser));
+
+    expect(list.body.data).toEqual([]);
+
+    const response = await apply(
+      initiative._id,
+      otherUser
+    );
+
+    expect(response.status).toBe(200);
+
+    expect(await Application.countDocuments())
+      .toBe(2);
+  }
+);
+
+test(
+  "multiple roles are allowed and sorted newest first",
+  async () => {
+    await apply();
+
+    await Application.updateOne(
+      {},
+      {
+        $set: {
+          appliedAt: new Date("2020-01-01"),
+        },
+      }
+    );
+
+    const second = await Initiative.create({
+      userId: ownerId,
+      initiativeName: "Second Role",
+      description: "Another opportunity",
+      servicesNeeded: ["Test"],
+    });
+
+    expect((await apply(second._id)).status)
+      .toBe(200);
+
+    const list = await request(app)
+      .get("/initiatives/applications/me")
+      .set("Cookie", cookie());
+
+    expect(
+      list.body.data.map(
+        (item) => item.roleName
+      )
+    ).toEqual(["Second Role", "Test Role"]);
+  }
+);
+
+test(
+  "new application history survives role deletion",
+  async () => {
+    await apply();
+
+    await Initiative.deleteOne({
+      _id: initiative._id,
+    });
+
+    const list = await request(app)
+      .get("/initiatives/applications/me")
+      .set("Cookie", cookie());
+
+    expect(list.body.data[0].roleName)
+      .toBe("Test Role");
+  }
+);
+
+test(
+  "validates authentication, role, existence and ID",
+  async () => {
+    const unauthenticatedApply =
+      await request(app).patch(
+        `/initiatives/apply/${initiative._id}`
+      );
+
+    expect(unauthenticatedApply.status)
+      .toBe(401);
+
+    const unauthenticatedList =
+      await request(app).get(
+        "/initiatives/applications/me"
+      );
+
+    expect(unauthenticatedList.status)
+      .toBe(401);
+
+    const wrongRole = await request(app)
+      .patch(
+        `/initiatives/apply/${initiative._id}`
+      )
+      .set(
+        "Cookie",
+        cookie(ownerId, "organization")
+      );
+
+    expect(wrongRole.status).toBe(403);
+
+    const missingInitiative = await apply(
+      new mongoose.Types.ObjectId()
+    );
+
+    expect(missingInitiative.status)
+      .toBe(404);
+
+    expect((await apply("bad-id")).status)
+      .toBe(400);
+
+    expect(await Application.countDocuments())
+      .toBe(0);
+  }
+);
+
+test(
+  "old endpoints cannot bypass tracking",
+  async () => {
+    for (const action of [
+      "subscribe",
+      "unsubscribe",
+    ]) {
+      const response = await request(app)
+        .patch(
+          `/initiatives/${action}/${initiative._id}`
+        )
+        .set("Cookie", cookie());
+
+      expect(response.status).toBe(410);
+    }
+  }
+);

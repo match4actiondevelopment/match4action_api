@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import jwt, {
-  JsonWebTokenError,
-  NotBeforeError,
-  TokenExpiredError,
-} from "jsonwebtoken";
-import { UserRole } from "../models/User";
+import jwt, { TokenExpiredError } from "jsonwebtoken";
+import {
+  User,
+  UserDocument,
+  UserRole,
+} from "../models/User";
 import { createError } from "../utils/createError";
 
 export interface SignJwtInterface {
@@ -13,130 +13,149 @@ export interface SignJwtInterface {
   email: string;
 }
 
-export const signJwtAccessToken = (data: SignJwtInterface) => {
-  return jwt.sign(
+export const signJwtAccessToken = (
+  data: SignJwtInterface
+) =>
+  jwt.sign(
     {
-      _id: data?._id,
-      role: data?.role,
-      email: data?.email,
+      _id: data._id,
+      role: data.role,
+      email: data.email,
     },
     process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
-    { expiresIn: process.env.ACCESS_TOKEN_PRIVATE_TIME || "15m" } as any
-  );
-};
-
-export const signJwtRefreshToken = (data: SignJwtInterface) => {
-  return jwt.sign(
     {
-      _id: data?._id,
-      role: data?.role,
-      email: data?.email,
+      expiresIn:
+        process.env.ACCESS_TOKEN_PRIVATE_TIME || "15m",
+    } as any
+  );
+
+export const signJwtRefreshToken = (
+  data: SignJwtInterface
+) =>
+  jwt.sign(
+    {
+      _id: data._id,
+      role: data.role,
+      email: data.email,
     },
     process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
-    { expiresIn: process.env.REFRESH_TOKEN_PRIVATE_TIME || "7d" } as any
+    {
+      expiresIn:
+        process.env.REFRESH_TOKEN_PRIVATE_TIME || "7d",
+    } as any
   );
-};
 
-export const isLogged = (req: Request, res: Response, next: NextFunction) => {
-  const token = req?.cookies?.access_token;
+const authenticate = (
+  roles?: (keyof typeof UserRole)[]
+) =>
+  async (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const token = req.cookies?.access_token;
 
-  if (!token || token === undefined) {
-    return next(createError(401, "Access Token not provided."));
-  }
-
-  jwt.verify(
-    token,
-    process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
-    async (err: any, payload: any) => {
-      if (err instanceof TokenExpiredError) {
+      if (typeof token !== "string" || !token) {
         return next(
-          createError(403, "Unauthorized! Access Token was expired.")
+          createError(401, "Access Token not provided.")
         );
       }
 
-      if (err instanceof NotBeforeError) {
-        return next(createError(403, "Jwt not active."));
-      }
+      const secret =
+        process.env.ACCESS_TOKEN_PRIVATE_KEY;
 
-      if (err instanceof JsonWebTokenError) {
-        return next(createError(403, "Jwt malformed."));
-      }
-      req.user = payload;
-      next();
-    }
-  );
-};
-
-export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
-  const token = req?.cookies?.access_token;
-
-  if (!token || token === undefined) {
-    return next(createError(401, "Access Token not provided."));
-  }
-
-  jwt.verify(
-    token,
-    process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
-    async (err: any, payload: any) => {
-      if (err instanceof TokenExpiredError) {
+      if (!secret) {
         return next(
-          createError(403, "Unauthorized! Access Token was expired.")
+          createError(
+            500,
+            "Authentication is not configured."
+          )
         );
       }
 
-      if (err instanceof NotBeforeError) {
-        return next(createError(403, "Jwt not active."));
+      let payload;
+
+      try {
+        payload = jwt.verify(token, secret, {
+          algorithms: ["HS256"],
+        });
+      } catch (error) {
+        return next(
+          createError(
+            403,
+            error instanceof TokenExpiredError
+              ? "Unauthorized! Access Token was expired."
+              : "Invalid access token."
+          )
+        );
       }
 
-      if (err instanceof JsonWebTokenError) {
-        return next(createError(403, "Jwt malformed."));
+      if (
+        typeof payload === "string" ||
+        typeof payload._id !== "string" ||
+        !/^[a-f\d]{24}$/i.test(payload._id)
+      ) {
+        return next(
+          createError(401, "Invalid account identity.")
+        );
       }
 
-      if (req.user?.role !== UserRole?.admin) {
-        return next(createError(403, "Unauthorized."));
+      // The token proves identity.
+      // MongoDB determines the account's current permissions.
+      const user = await User.findById(payload._id)
+        .select("role email")
+        .lean();
+
+      if (!user) {
+        return next(
+          createError(401, "Account no longer exists.")
+        );
       }
 
-      req.user = payload;
-      next();
+      if (
+        !Object.values(UserRole).includes(
+          user.role as UserRole
+        )
+      ) {
+        return next(
+          createError(
+            403,
+            "Account role requires administrator review."
+          )
+        );
+      }
+
+      if (
+        roles &&
+        !roles.includes(
+          user.role as keyof typeof UserRole
+        )
+      ) {
+        return next(
+          createError(
+            403,
+            "Forbidden: insufficient permissions."
+          )
+        );
+      }
+
+      req.user = {
+        _id: String(user._id),
+        role: user.role,
+        email: user.email,
+      } as UserDocument;
+
+      return next();
+    } catch (error) {
+      return next(error);
     }
-  );
-};
-
-export const hasRoles = (roles: (keyof typeof UserRole)[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const token = req?.cookies?.access_token;
-
-    if (!token || token === undefined) {
-      return next(createError(401, "Access Token not provided."));
-    }
-
-    jwt.verify(
-      token,
-      process.env.ACCESS_TOKEN_PRIVATE_KEY as string,
-      async (err: any, payload: any) => {
-        if (err instanceof TokenExpiredError) {
-          return next(createError(403, "Unauthorized! Access Token was expired."));
-        }
-
-        if (err instanceof NotBeforeError) {
-          return next(createError(403, "Jwt not active."));
-        }
-
-        if (err instanceof JsonWebTokenError) {
-          return next(createError(403, "Jwt malformed."));
-        }
-
-        // payload.role should be one of the enum values, mapping the enum correctly
-        // UserRole is an enum, its values at runtime are 'volunteer', 'admin', 'organization' because it's defined without assignment or with string assignment. 
-        // Wait, UserRole is: enum UserRole { 'volunteer', 'admin', 'organization' }
-        // Let's just check if payload.role is included.
-        if (!roles.includes(payload.role)) {
-          return next(createError(403, "Forbidden: insufficient permissions."));
-        }
-
-        req.user = payload;
-        next();
-      }
-    );
   };
-};
+
+export const isLogged = authenticate();
+
+export const hasRoles = (
+  roles: (keyof typeof UserRole)[]
+) => authenticate(roles);
+
+export const isAdmin = hasRoles(["admin"]);
