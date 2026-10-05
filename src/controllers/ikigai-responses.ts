@@ -8,6 +8,7 @@ export const saveIkigaiResponse = async (
   next: NextFunction
 ) => {
   try {
+    res.setHeader("Cache-Control", "private, no-store");
     const userId = req.user?._id;
     if (!userId) {
       return next(createError(401, "User not authenticated"));
@@ -29,13 +30,17 @@ export const saveIkigaiResponse = async (
 
     answers.forEach((answer: any) => {
       if (answer.category && totalScores.hasOwnProperty(answer.category)) {
-        totalScores[answer.category as keyof typeof totalScores] += answer.optionValue || 0;
+        totalScores[answer.category as keyof typeof totalScores] +=
+          answer.optionValue || 0;
       }
     });
 
     // Determine the suggested Ikigai (highest scoring category)
     const suggestedIkigai = Object.keys(totalScores).reduce((a, b) =>
-      totalScores[a as keyof typeof totalScores] > totalScores[b as keyof typeof totalScores] ? a : b
+      totalScores[a as keyof typeof totalScores] >
+      totalScores[b as keyof typeof totalScores]
+        ? a
+        : b
     ) as "passion" | "mission" | "profession" | "vocation";
 
     // Check if user already has a response and update it, or create a new one
@@ -63,7 +68,6 @@ export const saveIkigaiResponse = async (
       success: true,
       message: "Ikigai response saved successfully.",
     });
-
   } catch (error) {
     next(error);
   }
@@ -75,6 +79,7 @@ export const getIkigaiResponse = async (
   next: NextFunction
 ) => {
   try {
+    res.setHeader("Cache-Control", "private, no-store");
     const userId = req.user?._id;
     if (!userId) {
       return next(createError(401, "User not authenticated"));
@@ -82,7 +87,7 @@ export const getIkigaiResponse = async (
 
     const ikigaiResponse = await IkigaiResponse.findOne({ userId })
       .sort({ createdAt: -1 })
-      .populate('answers.questionId');
+      .populate("answers.questionId");
 
     if (!ikigaiResponse) {
       return res.status(200).send({
@@ -97,7 +102,6 @@ export const getIkigaiResponse = async (
       success: true,
       message: "Ikigai response retrieved successfully.",
     });
-
   } catch (error) {
     next(error);
   }

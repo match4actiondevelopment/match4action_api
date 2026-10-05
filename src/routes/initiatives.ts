@@ -5,24 +5,23 @@ import {
   getAll,
   getInitiativesByUser,
   getOne,
+  getOwnedInitiatives,
   remove,
   update,
 } from "../controllers/initiatives";
-import {
-  getMyApplications,
-} from "../controllers/applications";
-import {
-  hasRoles,
-  isLogged,
-} from "../middleware/jwt";
-import {
-  multerUpload,
-} from "../middleware/multer";
-import {
-  createError,
-} from "../utils/createError";
+import { getMyApplications } from "../controllers/applications";
+import { hasRoles, isLogged } from "../middleware/jwt";
+import { multerUpload } from "../middleware/multer";
+import { createError } from "../utils/createError";
 
 const router: Router = Router();
+
+router.get(
+  "/owned/me",
+  isLogged,
+  hasRoles(["organization", "admin"]),
+  getOwnedInitiatives
+);
 
 /**
  * @openapi
@@ -37,11 +36,7 @@ const router: Router = Router();
  *       401:
  *         description: Authentication required
  */
-router.get(
-  "/applications/me",
-  isLogged,
-  getMyApplications
-);
+router.get("/applications/me", isLogged, getMyApplications);
 
 /**
  * @openapi
@@ -58,11 +53,7 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/InitiativesResponse'
  */
-router.get(
-  "/user",
-  isLogged,
-  getInitiativesByUser
-);
+router.get("/user", isLogged, getInitiativesByUser);
 
 /**
  * @openapi
@@ -82,16 +73,13 @@ router.get(
  *       410:
  *         description: Use the opportunity Apply action
  */
-router.patch(
-  "/subscribe/:id",
-  isLogged,
-  (_req, _res, next) =>
-    next(
-      createError(
-        410,
-        "Use the opportunity Apply action to submit an application."
-      )
+router.patch("/subscribe/:id", isLogged, (_req, _res, next) =>
+  next(
+    createError(
+      410,
+      "Use the opportunity Apply action to submit an application."
     )
+  )
 );
 
 /**
@@ -121,12 +109,7 @@ router.patch(
  *       409:
  *         description: Already applied or initiative unavailable
  */
-router.patch(
-  "/apply/:id",
-  isLogged,
-  hasRoles(["volunteer"]),
-  apply
-);
+router.patch("/apply/:id", isLogged, hasRoles(["volunteer"]), apply);
 
 /**
  * @openapi
@@ -146,16 +129,10 @@ router.patch(
  *       410:
  *         description: Application withdrawal is unsupported
  */
-router.patch(
-  "/unsubscribe/:id",
-  isLogged,
-  (_req, _res, next) =>
-    next(
-      createError(
-        410,
-        "Application withdrawal is not supported in this version."
-      )
-    )
+router.patch("/unsubscribe/:id", isLogged, (_req, _res, next) =>
+  next(
+    createError(410, "Application withdrawal is not supported in this version.")
+  )
 );
 
 /**
@@ -251,12 +228,7 @@ router.post(
  *       200:
  *         description: Initiative removed
  */
-router.delete(
-  "/:id",
-  isLogged,
-  hasRoles(["admin", "organization"]),
-  remove
-);
+router.delete("/:id", isLogged, hasRoles(["admin", "organization"]), remove);
 
 router.put(
   "/:id",
